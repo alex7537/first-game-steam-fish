@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fish Lab · 程序化鱼类实验室</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #071a2b; color: #eaf8ff; }
+    main { width: min(1100px, 92vw); margin: 0 auto; padding: 42px 0; }
+    h1 { margin: 0 0 8px; font-size: clamp(2rem, 5vw, 4rem); }
+    .lead { color: #a9c9d8; margin: 0 0 26px; }
+    .panel { background: #0b2639cc; border: 1px solid #1d536d; border-radius: 18px; padding: 18px; box-shadow: 0 18px 60px #00101c99; }
+    .controls { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 16px; }
+    input, button { border: 1px solid #34718b; border-radius: 12px; font: inherit; }
+    input { min-width: 0; padding: 13px 15px; color: #fff; background: #061a29; }
+    button { padding: 12px 18px; cursor: pointer; color: #03131d; background: #76dcf5; font-weight: 750; }
+    button:hover { background: #a5ecfc; }
+    canvas { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 13px; background: linear-gradient(#0c4968, #082b48 62%, #0a2436); }
+    .hint { margin: 12px 2px 0; color: #83adbe; font-size: .9rem; }
+    @media (max-width: 600px) { .controls { grid-template-columns: 1fr; } main { padding: 24px 0; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Fish Lab</h1>
+    <p class="lead">用一句话创造一条鱼。当前版本完全离线，通过关键词生成颜色、体型和性格。</p>
+    <section class="panel">
+      <form class="controls" id="fish-form">
+        <input id="description" value="一条圆滚滚、金色、活泼的小鱼" aria-label="描述你想生成的鱼">
+        <button type="submit">放入鱼缸</button>
+      </form>
+      <canvas id="aquarium" width="960" height="540" aria-label="程序化鱼缸"></canvas>
+      <p class="hint">试试：蓝色、红色、金色、瘦长、圆滚滚、巨大、小巧、活泼、安静。点击鱼缸也会生成随机鱼。</p>
+    </section>
+  </main>
+  <script>
+    const canvas = document.querySelector('#aquarium');
+    const ctx = canvas.getContext('2d');
+    const fish = [];
+
+    const pick = list => list[Math.floor(Math.random() * list.length)];
+    const includesAny = (text, words) => words.some(word => text.includes(word));
+
+    function genesFrom(text = '') {
+      let color = pick(['#ffb84d', '#6ee7ff', '#ff718d', '#9cff8d', '#b89cff']);
+      if (includesAny(text, ['金', '黄'])) color = '#ffc857';
+      if (includesAny(text, ['蓝', '海'])) color = '#55c8ff';
+      if (includesAny(text, ['红', '火'])) color = '#ff6577';
+      if (includesAny(text, ['绿', '森林'])) color = '#78e69b';
+      if (includesAny(text, ['紫'])) color = '#bb91ff';
+      const size = includesAny(text, ['巨大', '大鱼']) ? 1.45 : includesAny(text, ['小巧', '小鱼', '迷你']) ? .72 : 1;
+      const aspect = includesAny(text, ['瘦长', '修长']) ? 1.65 : includesAny(text, ['圆滚滚', '圆胖', '胖']) ? .82 : 1.2;
+      const speed = includesAny(text, ['安静', '缓慢', '慵懒']) ? .55 : includesAny(text, ['活泼', '快速', '敏捷']) ? 1.65 : 1;
+      return { color, size, aspect, speed };
+    }
+
+    function addFish(description) {
+      const genes = genesFrom(description);
+      const direction = Math.random() < .5 ? -1 : 1;
+      fish.push({
+        ...genes,
+        x: 80 + Math.random() * (canvas.width - 160),
+        y: 90 + Math.random() * (canvas.height - 190),
+        vx: direction * (0.45 + Math.random() * .45) * genes.speed,
+        phase: Math.random() * Math.PI * 2
+      });
+      if (fish.length > 18) fish.shift();
+    }
+
+    function drawFish(f, time) {
+      const length = 54 * f.size * f.aspect;
+      const height = 43 * f.size;
+      const direction = Math.sign(f.vx);
+      ctx.save();
+      ctx.translate(f.x, f.y + Math.sin(time * .002 * f.speed + f.phase) * 7);
+      ctx.scale(direction, 1);
+      ctx.fillStyle = f.color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, length / 2, height / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-length / 2 + 3, 0);
+      ctx.lineTo(-length * .82, -height * .55);
+      ctx.lineTo(-length * .82, height * .55);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#eefcff';
+      ctx.beginPath();
+      ctx.arc(length * .26, -height * .12, Math.max(3, 5 * f.size), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#092234';
+      ctx.beginPath();
+      ctx.arc(length * .275, -height * .12, Math.max(1.5, 2.4 * f.size), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBackground(time) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#0c5778');
+      gradient.addColorStop(.7, '#092e4c');
+      gradient.addColorStop(1, '#0b2637');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#173f38';
+      for (let x = 18; x < canvas.width; x += 52) {
+        const h = 24 + ((x * 17) % 72);
+        ctx.fillRect(x, canvas.height - 38 - h, 7, h + Math.sin(time * .001 + x) * 5);
+      }
+      ctx.fillStyle = '#b79a66';
+      ctx.fillRect(0, canvas.height - 38, canvas.width, 38);
+    }
+
+    function frame(time) {
+      drawBackground(time);
+      for (const f of fish) {
+        f.x += f.vx;
+        const margin = 85 * f.size;
+        if (f.x < margin || f.x > canvas.width - margin) f.vx *= -1;
+        drawFish(f, time);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    document.querySelector('#fish-form').addEventListener('submit', event => {
+      event.preventDefault();
+      addFish(document.querySelector('#description').value.trim());
+    });
+    canvas.addEventListener('click', () => addFish(''));
+    ['金色活泼小鱼', '蓝色瘦长安静', '红色圆滚滚'].forEach(addFish);
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

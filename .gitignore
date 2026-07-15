@@ -1,0 +1,19 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
