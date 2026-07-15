@@ -54,13 +54,12 @@ python -m http.server 8000
 {
   id: "FL-023",
   name: "泡泡仙鱼",
-  description: "泡泡斑鱼与闪闪仙鱼的后代",
   generation: 2,
   parents: ["FL-008", "FL-014"],
-  mutations: ["新部件：独角"],
+  mutations: ["独角"],
   color: "hsl(18.4 82.0% 61.0%)",
-  secondary: "#ff8c42",
-  bodyShape: "圆胖",
+  accent: "#ff8c42",
+  shape: "圆胖",
   tail: "扇尾",
   fin: "蝶鳍",
   mouth: "微笑",
@@ -70,8 +69,7 @@ python -m http.server 8000
   fatness: 1.2,
   eyeSize: 1.0,
   speed: 1.0,
-  temperament: "好奇",
-  specialParts: ["独角"]
+  parts: ["独角"]
 }
 ```
 
