@@ -3,63 +3,55 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#061824">
-  <title>Fish Lab v0.2 · 多鱼同缸</title>
+  <meta name="theme-color" content="#061722">
+  <title>Fish Lab v0.3 · 遗传水族馆</title>
   <style>
     :root {
       color-scheme: dark;
       font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-      --ink: #eafaff;
-      --muted: #91b7c6;
-      --line: #24526a;
-      --panel: #0a2233e8;
+      --ink: #effcff;
+      --muted: #91b4c2;
+      --line: #245269;
+      --panel: #092131ed;
       --accent: #72e4ff;
+      --pair: #ffad4d;
+      --common: #9aafba;
+      --rare: #55aaff;
+      --epic: #b87aff;
+      --legendary: #ffc64d;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       color: var(--ink);
-      background: radial-gradient(circle at 50% -20%, #174b65, #061824 45%, #030e17);
+      background: radial-gradient(circle at 50% -15%, #174b63, #061722 46%, #020c13);
     }
     button, input { font: inherit; }
     button { cursor: pointer; }
-    main { width: min(1180px, 94vw); margin: 0 auto; padding: 34px 0 48px; }
+    main { width: min(1220px, 94vw); margin: 0 auto; padding: 32px 0 54px; }
     header { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
-    h1 { margin: 0; font-size: clamp(2.2rem, 6vw, 4.8rem); letter-spacing: -.06em; line-height: .95; }
+    h1 { margin: 0; font-size: clamp(2.3rem, 6vw, 4.9rem); letter-spacing: -.065em; line-height: .95; }
     h1 span { color: var(--accent); }
-    .lead { max-width: 540px; margin: 8px 0 0; color: var(--muted); }
-    .version { flex: none; padding: 7px 11px; border: 1px solid #4ca1bd; border-radius: 999px; color: #bdf3ff; background: #092a3b; }
-    .toolbar {
-      display: grid;
-      grid-template-columns: minmax(220px, 1fr) auto auto;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    input, .action {
-      min-width: 0;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      color: var(--ink);
-      background: #071b2a;
-    }
+    .lead { max-width: 640px; margin: 9px 0 0; color: var(--muted); }
+    .version { flex: none; padding: 7px 11px; border: 1px solid #4b9eb9; border-radius: 999px; color: #c1f3ff; background: #09293a; }
+    .toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) repeat(3, auto); gap: 9px; margin-bottom: 12px; }
+    input, .action { min-width: 0; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: #071b29; }
     input { padding: 13px 15px; outline: none; }
     input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #72e4ff18; }
-    .action { padding: 12px 16px; font-weight: 750; }
+    .action { padding: 12px 15px; font-weight: 750; }
     .action.primary { color: #03151d; border-color: #8beaff; background: var(--accent); }
+    .action.pair.active { color: #231305; border-color: #ffd29a; background: var(--pair); box-shadow: 0 0 22px #ffad4d55; }
     .action:hover { filter: brightness(1.12); }
-    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; }
-    .tank-shell, .inspector {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: var(--panel);
-      box-shadow: 0 24px 70px #010b12aa;
-    }
-    .tank-shell { padding: 10px; overflow: hidden; }
-    .tank-meta { display: flex; justify-content: space-between; gap: 12px; padding: 3px 5px 10px; color: var(--muted); font-size: .88rem; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; }
+    .tank-shell, .inspector, .codex { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 24px 70px #010a11a8; }
+    .tank-shell { padding: 10px; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+    .tank-shell.pairing { border-color: var(--pair); box-shadow: 0 0 0 2px #ffad4d44, 0 24px 70px #010a11a8; }
+    .tank-meta { display: flex; justify-content: space-between; gap: 12px; min-height: 31px; padding: 3px 5px 9px; color: var(--muted); font-size: .88rem; }
+    .tank-shell.pairing .tank-meta { color: #ffd49d; }
     #aquarium {
       position: relative;
-      height: clamp(400px, 56vw, 610px);
+      height: clamp(410px, 55vw, 610px);
       overflow: hidden;
       isolation: isolate;
       border-radius: 12px;
@@ -69,19 +61,12 @@
         linear-gradient(180deg, #0a6687, #084366 58%, #092b42);
     }
     #aquarium::before {
-      content: "";
-      position: absolute;
-      inset: auto 0 0;
-      height: 52px;
-      z-index: -1;
+      content: ""; position: absolute; inset: auto 0 0; height: 52px; z-index: -1;
       background: linear-gradient(#bda26a, #806644);
       clip-path: polygon(0 38%, 8% 14%, 17% 36%, 30% 17%, 42% 39%, 58% 12%, 70% 36%, 86% 18%, 100% 42%, 100% 100%, 0 100%);
     }
     #aquarium::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
+      content: ""; position: absolute; inset: 0; pointer-events: none;
       background: linear-gradient(105deg, transparent 12%, #d8fbff0d 13% 20%, transparent 21% 68%, #d8fbff0a 69% 75%, transparent 76%);
     }
     .plant { position: absolute; bottom: 32px; width: 12px; border-radius: 100% 0; transform-origin: bottom; background: #207b67; opacity: .85; }
@@ -89,51 +74,57 @@
     .plant.two { left: 10%; height: 130px; transform: rotate(7deg); }
     .plant.three { right: 8%; height: 112px; transform: rotate(-5deg); }
     .fish {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 150px;
-      height: 84px;
-      padding: 0;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      transform-origin: center;
-      will-change: transform;
-      filter: drop-shadow(0 8px 6px #00121d55);
+      position: absolute; left: 0; top: 0; width: 150px; height: 112px; padding: 0; border: 0; outline: 0;
+      color: var(--ink); background: transparent; transform-origin: center; will-change: transform;
     }
-    .fish svg { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-    .fish:hover { filter: brightness(1.1) drop-shadow(0 8px 7px #00121d77); }
-    .fish.selected { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 15px var(--accent)); }
-    .fish.selected::after {
-      content: "";
-      position: absolute;
-      inset: -9px;
-      border: 2px solid #d9faffaa;
-      border-radius: 50%;
-      animation: pulse 1.4s ease-in-out infinite;
+    .fish-art { width: 150px; height: 84px; transform-origin: center; transition: filter .15s; filter: drop-shadow(0 8px 6px #00121d66); }
+    .fish-art svg { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+    .fish:hover .fish-art { filter: brightness(1.12) drop-shadow(0 8px 7px #00121d88); }
+    .fish.selected .fish-art { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 15px var(--accent)); }
+    .fish.parent .fish-art { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 17px var(--pair)); }
+    .fish.parent::before { content: "💕"; position: absolute; z-index: 2; top: -13px; left: 50%; font-size: 20px; transform: translateX(-50%); }
+    .nameplate {
+      position: absolute; left: 50%; bottom: 0; display: flex; align-items: center; gap: 5px; width: max-content; max-width: 170px;
+      padding: 4px 7px; border: 1px solid #8bc4d266; border-radius: 999px; color: #eafcff; background: #03141ccc;
+      font-size: 10px; line-height: 1; transform: translateX(-50%); pointer-events: none; backdrop-filter: blur(4px);
     }
-    @keyframes pulse { 50% { opacity: .35; transform: scale(1.08); } }
+    .nameplate strong { max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rarity { padding: 2px 5px; border: 1px solid currentColor; border-radius: 999px; font-weight: 800; }
+    .rarity.common { color: var(--common); }.rarity.rare { color: var(--rare); }.rarity.epic { color: var(--epic); }.rarity.legendary { color: var(--legendary); }
     .inspector { padding: 18px; }
     .inspector h2 { margin: 0 0 5px; font-size: 1.1rem; }
-    .inspector .empty { color: var(--muted); line-height: 1.55; }
-    .gene-list { margin: 15px 0; display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: .9rem; }
-    .gene-list dt { color: var(--muted); }
-    .gene-list dd { margin: 0; text-align: right; }
-    .swatch { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border: 1px solid #fff8; border-radius: 50%; vertical-align: -1px; }
-    .inspector-actions { display: grid; gap: 8px; }
-    .inspector-actions button { padding: 10px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #0b2a3c; }
+    .inspector .empty, .muted { color: var(--muted); line-height: 1.5; }
+    .gene-list { margin: 14px 0; display: grid; grid-template-columns: 1fr auto; gap: 7px; font-size: .87rem; }
+    .gene-list dt { color: var(--muted); }.gene-list dd { margin: 0; text-align: right; }
+    .swatch { display: inline-block; width: 12px; height: 12px; margin-right: 5px; border: 1px solid #fff8; border-radius: 50%; vertical-align: -1px; }
+    .inspector-actions { display: grid; gap: 7px; }
+    .inspector-actions button { padding: 9px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #0b2a3c; }
     .inspector-actions .danger { color: #ffc8c8; border-color: #8a454b; background: #351c26; }
-    .note { margin: 14px 3px 0; color: var(--muted); font-size: .88rem; }
-    @media (max-width: 800px) {
-      header { align-items: start; }
-      .toolbar { grid-template-columns: 1fr 1fr; }
-      .toolbar input { grid-column: 1 / -1; }
-      .workspace { grid-template-columns: 1fr; }
-      .inspector { min-height: 180px; }
+    .codex { margin-top: 14px; padding: 18px; }
+    .codex-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .codex h2 { margin: 0; font-size: 1.25rem; }.codex-header p { margin: 4px 0 0; color: var(--muted); font-size: .88rem; }
+    .codex-actions { display: flex; gap: 7px; }
+    .codex-actions button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: #0b2a3c; }
+    #codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 9px; margin-top: 14px; }
+    .species-card {
+      display: grid; grid-template-columns: 63px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 82px; padding: 8px;
+      border: 1px solid var(--rarity-color); border-radius: 12px; color: var(--ink); text-align: left; background: #061a27;
+      box-shadow: inset 0 0 20px color-mix(in srgb, var(--rarity-color) 8%, transparent);
     }
-    @media (max-width: 480px) { .action { padding-inline: 8px; } .version { display: none; } }
-    @media (prefers-reduced-motion: reduce) { .fish.selected::after { animation: none; } }
+    .species-card:hover { background: #0a2738; transform: translateY(-1px); }
+    .species-card svg { width: 63px; height: 48px; overflow: visible; }.species-card strong, .species-card small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .species-card small { margin-top: 4px; color: var(--rarity-color); }
+    .codex-empty { grid-column: 1 / -1; color: var(--muted); }
+    .note { margin: 13px 3px 0; color: var(--muted); font-size: .87rem; }
+    @media (max-width: 860px) {
+      header { align-items: start; }.toolbar { grid-template-columns: 1fr 1fr 1fr; }.toolbar input { grid-column: 1 / -1; }
+      .workspace { grid-template-columns: 1fr; }.inspector { min-height: 180px; }
+    }
+    @media (max-width: 560px) {
+      .version { display: none; }.toolbar { grid-template-columns: 1fr 1fr; }.toolbar .pair { grid-column: 1 / -1; }
+      .codex-header { align-items: start; flex-direction: column; }.codex-actions { width: 100%; }.codex-actions button { flex: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
   </style>
 </head>
 <body>
@@ -141,51 +132,152 @@
     <header>
       <div>
         <h1>Fish <span>Lab</span></h1>
-        <p class="lead">把一句描述孵化成独一无二的鱼。点击鱼查看基因，点击水面空白处取消选择。</p>
+        <p class="lead">培育、变异、收藏。选择双亲，让颜色与性状跨越世代。</p>
       </div>
-      <span class="version">v0.2 · 多鱼同缸</span>
+      <span class="version">v0.3 · 遗传水族馆</span>
     </header>
 
     <form class="toolbar" id="hatch-form">
       <input id="description" value="一条圆滚滚、金色、活泼的小鱼" aria-label="描述想孵化的鱼" maxlength="80">
       <button class="action primary" type="submit">孵化新鱼</button>
       <button class="action" id="mutate-button" type="button">随机变异</button>
+      <button class="action pair" id="pair-button" type="button">💕 配对繁殖</button>
     </form>
 
     <section class="workspace">
-      <div class="tank-shell">
+      <div class="tank-shell" id="tank-shell">
         <div class="tank-meta">
           <span id="population">鱼群 0 / 12</span>
           <span id="message" aria-live="polite">鱼缸准备好了</span>
         </div>
-        <div id="aquarium" aria-label="多鱼生态缸">
+        <div id="aquarium" aria-label="遗传水族箱">
           <i class="plant one"></i><i class="plant two"></i><i class="plant three"></i>
         </div>
       </div>
 
       <aside class="inspector" id="inspector">
         <h2>基因观察台</h2>
-        <p class="empty">选择一条鱼后，可以查看它不随帧变化的基因、导出 SVG，或将它放生。</p>
+        <p class="empty">选择一条鱼查看它的基因、谱系和稀有度。按住 Shift 再点另一条鱼可以快速繁殖。</p>
       </aside>
     </section>
-    <p class="note">提示：鱼的基因和实时运动状态分开保存；鱼缸最多容纳 12 条鱼。</p>
+    <p class="note">配对模式：依次点击两条鱼。快捷方式：选中一条鱼后 Shift+点击另一条。图鉴目前只保存在内存中，刷新前请导出。</p>
+
+    <section class="codex">
+      <div class="codex-header">
+        <div>
+          <h2>物种图鉴 <span id="codex-count">0</span></h2>
+          <p>按稀有度排序；点击物种卡片可将该物种再放一条进缸。</p>
+        </div>
+        <div class="codex-actions">
+          <button id="export-codex" type="button">导出 JSON</button>
+          <button id="import-codex" type="button">导入 JSON</button>
+          <input id="codex-file" type="file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+      <div id="codex-grid"><p class="codex-empty">孵化第一条鱼后，物种会自动收录在这里。</p></div>
+    </section>
   </main>
 
   <script>
     const MAX_FISH = 12;
+    const MUTATION_RATE = 0.08;
+    const TAIL_MUTATION_RATE = 0.05;
     const FISHES = [];
+    const CODEX = new Map();
     const aquarium = document.querySelector('#aquarium');
+    const tankShell = document.querySelector('#tank-shell');
     const inspector = document.querySelector('#inspector');
     const population = document.querySelector('#population');
     const message = document.querySelector('#message');
+    const codexGrid = document.querySelector('#codex-grid');
+    const pairButton = document.querySelector('#pair-button');
     let selectedId = null;
+    let pairMode = false;
+    let parentIds = [];
     let lastTime = performance.now();
     let nextId = 1;
+
+    const BODY_SHAPES = ['流线', '圆胖', '纤长'];
+    const TAILS = ['扇尾', '月牙尾', '短尾'];
+    const MUTANT_TAILS = ['彗星尾', '双叶尾'];
+    const FINS = ['短鳍', '长鳍', '蝶鳍', '刺鳍'];
+    const MOUTHS = ['微笑', '嘟嘴', '尖吻', '方嘴'];
+    const PATTERNS = ['纯色', '斑点', '条纹'];
+    const SPECIAL_PARTS = ['独角', '发光鳍', '长须', '皇冠', '星斑', '双尾'];
+    const RARITY_META = {
+      common: { label: '普通', color: '#9aafba', rank: 0 },
+      rare: { label: '稀有', color: '#55aaff', rank: 1 },
+      epic: { label: '史诗', color: '#b87aff', rank: 2 },
+      legendary: { label: '传说', color: '#ffc64d', rank: 3 }
+    };
 
     const pick = list => list[Math.floor(Math.random() * list.length)];
     const range = (min, max) => min + Math.random() * (max - min);
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
     const contains = (text, words) => words.some(word => text.includes(word));
+    const inherit = (father, mother, key) => Math.random() < .5 ? father[key] : mother[key];
+    const newId = () => `FL-${String(nextId++).padStart(3, '0')}`;
+    const escapeMarkup = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
+    // 三个均匀随机数取平均，得到集中在 0 附近的近似高斯噪声。
+    function gauss() {
+      return ((Math.random() + Math.random() + Math.random()) / 3 - .5) * 2;
+    }
+
+    function blendContinuous(a, b, min, max, noise) {
+      const weight = range(.2, .8);
+      return clamp(a * weight + b * (1 - weight) + gauss() * noise, min, max);
+    }
+
+    function colorToHsl(color) {
+      const hsl = color.match(/^hsl\(\s*([\d.]+)(?:deg)?\s+([\d.]+)%\s+([\d.]+)%\s*\)$/i);
+      if (hsl) return { h: Number(hsl[1]) % 360, s: Number(hsl[2]), l: Number(hsl[3]) };
+      const hex = color.replace('#', '');
+      const full = hex.length === 3 ? hex.split('').map(char => char + char).join('') : hex;
+      let r = parseInt(full.slice(0, 2), 16) / 255;
+      let g = parseInt(full.slice(2, 4), 16) / 255;
+      let b = parseInt(full.slice(4, 6), 16) / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const delta = max - min;
+      let h = 0;
+      const l = (max + min) / 2;
+      const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+      if (delta !== 0) {
+        if (max === r) h = 60 * (((g - b) / delta) % 6);
+        else if (max === g) h = 60 * ((b - r) / delta + 2);
+        else h = 60 * ((r - g) / delta + 4);
+      }
+      return { h: (h + 360) % 360, s: s * 100, l: l * 100 };
+    }
+
+    // 在 HSL 色相环上沿最短弧插值，避免红色和橙色绕远路混成青色。
+    function mixColor(colorA, colorB, weight = range(.3, .7)) {
+      const a = colorToHsl(colorA);
+      const b = colorToHsl(colorB);
+      const shortestHue = ((b.h - a.h + 540) % 360) - 180;
+      const h = (a.h + shortestHue * weight + 360) % 360;
+      const s = a.s + (b.s - a.s) * weight;
+      const l = a.l + (b.l - a.l) * weight;
+      return `hsl(${h.toFixed(1)} ${s.toFixed(1)}% ${l.toFixed(1)}%)`;
+    }
+
+    function randomName() {
+      return pick(['泡泡', '闪闪', '月光', '珊瑚', '星砂', '团团', '琉璃', '浪花']) + pick(['斑鱼', '仙鱼', '灯鱼', '尾鱼', '星鱼', '锦鱼']);
+    }
+
+    function childName(father, mother) {
+      const left = father.name.slice(0, Math.ceil(father.name.length / 2));
+      const right = mother.name.slice(Math.floor(mother.name.length / 2));
+      return (left + right).slice(0, 8);
+    }
+
+    function freezeGene(gene) {
+      gene.specialParts = Object.freeze([...new Set(gene.specialParts || [])].sort());
+      gene.parents = Object.freeze([...(gene.parents || [])]);
+      gene.mutations = Object.freeze([...(gene.mutations || [])]);
+      return Object.freeze(gene);
+    }
 
     function randomGene(description = '') {
       const palettes = [
@@ -198,143 +290,288 @@
       if (contains(description, ['红', '火'])) [color, secondary] = ['#ff6b6b', '#b9385a'];
       if (contains(description, ['绿', '森林'])) [color, secondary] = ['#85e89d', '#169c87'];
       if (contains(description, ['紫'])) [color, secondary] = ['#c29cff', '#7048c8'];
-
-      return Object.freeze({
-        id: `FL-${String(nextId++).padStart(3, '0')}`,
-        color,
-        secondary,
-        size: contains(description, ['巨大', '大鱼']) ? 1.28 : contains(description, ['小巧', '小鱼', '迷你']) ? .72 : range(.86, 1.1),
-        aspect: contains(description, ['瘦长', '修长']) ? 1.28 : contains(description, ['圆滚滚', '圆胖', '胖']) ? .78 : range(.9, 1.12),
-        speed: contains(description, ['安静', '缓慢', '慵懒']) ? .62 : contains(description, ['活泼', '快速', '敏捷']) ? 1.38 : range(.82, 1.12),
+      const size = contains(description, ['巨大', '大鱼']) ? 1.28 : contains(description, ['小巧', '小鱼', '迷你']) ? .72 : range(.86, 1.1);
+      const fatness = contains(description, ['圆滚滚', '圆胖', '胖']) ? 1.28 : contains(description, ['瘦长', '修长']) ? .72 : range(.88, 1.12);
+      const speed = contains(description, ['安静', '缓慢', '慵懒']) ? .62 : contains(description, ['活泼', '快速', '敏捷']) ? 1.38 : range(.82, 1.12);
+      const bodyShape = fatness > 1.18 ? '圆胖' : fatness < .82 ? '纤长' : pick(BODY_SHAPES);
+      const name = randomName();
+      return freezeGene({
+        id: newId(), name, description: description || `野生的${name}`, generation: 0, parents: [], mutations: [],
+        color, secondary, bodyShape, tail: pick(TAILS), fin: pick(FINS), mouth: pick(MOUTHS), pattern: pick(PATTERNS),
+        eyeCount: pick([1, 1, 1, 2, 2, 3]), size, fatness, eyeSize: range(.82, 1.16), speed,
         temperament: contains(description, ['安静', '慵懒']) ? '安静' : contains(description, ['活泼', '敏捷']) ? '活泼' : pick(['好奇', '温和', '机警']),
-        pattern: pick(['斑点', '条纹', '纯色']),
-        fin: pick(['扇形', '月牙', '短鳍'])
+        specialParts: Math.random() < .1 ? [pick(SPECIAL_PARTS)] : []
       });
     }
 
-    function mutateGene(parent) {
-      const base = parent || randomGene();
-      const hue = Math.floor(range(0, 360));
-      return Object.freeze({
-        ...base,
-        id: `FL-${String(nextId++).padStart(3, '0')}`,
-        color: `hsl(${hue} 78% 65%)`,
-        secondary: `hsl(${(hue + range(35, 90)) % 360} 70% 48%)`,
-        size: clamp(base.size * range(.82, 1.18), .65, 1.38),
-        aspect: clamp(base.aspect * range(.88, 1.12), .7, 1.35),
-        speed: clamp(base.speed * range(.8, 1.2), .5, 1.55),
-        temperament: pick(['好奇', '温和', '机警', '活泼', '安静']),
-        pattern: pick(['斑点', '条纹', '纯色']),
-        fin: pick(['扇形', '月牙', '短鳍'])
+    function cloneGene(source) {
+      return freezeGene({ ...source, id: newId(), parents: [...source.parents], mutations: [...source.mutations], specialParts: [...source.specialParts] });
+    }
+
+    // 遗传算法的交叉 + 变异：离散基因二选一，连续基因混合并加入噪声。
+    function crossGenes(father, mother) {
+      const mutations = [];
+      const union = [...new Set([...father.specialParts, ...mother.specialParts])];
+      const specialParts = union.filter(() => Math.random() < .5);
+      if (Math.random() < MUTATION_RATE) {
+        const candidates = SPECIAL_PARTS.filter(part => !union.includes(part));
+        if (candidates.length) {
+          const mutation = pick(candidates);
+          specialParts.push(mutation);
+          mutations.push(`新部件：${mutation}`);
+        }
+      }
+      let tail = inherit(father, mother, 'tail');
+      if (Math.random() < TAIL_MUTATION_RATE) {
+        tail = pick(MUTANT_TAILS);
+        mutations.push(`尾巴突变：${tail}`);
+      }
+      const name = childName(father, mother);
+      return freezeGene({
+        id: newId(), name,
+        description: `${father.name}与${mother.name}的后代`,
+        generation: Math.max(father.generation, mother.generation) + 1,
+        parents: [father.id, mother.id], mutations,
+        color: mixColor(father.color, mother.color),
+        secondary: mixColor(father.secondary, mother.secondary),
+        bodyShape: inherit(father, mother, 'bodyShape'), tail,
+        fin: inherit(father, mother, 'fin'), mouth: inherit(father, mother, 'mouth'), pattern: inherit(father, mother, 'pattern'),
+        eyeCount: inherit(father, mother, 'eyeCount'),
+        size: blendContinuous(father.size, mother.size, .62, 1.42, .12),
+        fatness: blendContinuous(father.fatness, mother.fatness, .62, 1.42, .14),
+        eyeSize: blendContinuous(father.eyeSize, mother.eyeSize, .62, 1.5, .13),
+        speed: blendContinuous(father.speed, mother.speed, .5, 1.58, .13),
+        temperament: inherit(father, mother, 'temperament'), specialParts
       });
+    }
+
+    // 连续值不参与物种键，否则微小浮点差异会让每条鱼都变成新物种。
+    function speciesKey(gene) {
+      return [gene.bodyShape, gene.tail, gene.fin, gene.mouth, gene.pattern, gene.eyeCount, [...gene.specialParts].sort().join('+') || '无'].join('|');
+    }
+
+    function rarityScore(gene) {
+      let score = gene.specialParts.length * 2 + gene.mutations.length * 3;
+      if (MUTANT_TAILS.includes(gene.tail)) score += 2;
+      if (gene.eyeCount >= 4) score += 1;
+      if (gene.size < .72 || gene.size > 1.3) score += 1;
+      if (gene.fatness < .72 || gene.fatness > 1.3) score += 1;
+      if (gene.eyeSize > 1.35) score += 1;
+      return score;
+    }
+
+    // 稀有度门槛：3 / 6 / 9。想降低传说出现率可把 9 调成 11。
+    function rarityOf(gene) {
+      const score = rarityScore(gene);
+      if (score >= 9) return 'legendary';
+      if (score >= 6) return 'epic';
+      if (score >= 3) return 'rare';
+      return 'common';
+    }
+
+    function patternMarkup(gene) {
+      if (gene.pattern === '斑点' || gene.specialParts.includes('星斑')) {
+        const star = gene.specialParts.includes('星斑') ? '★' : '';
+        return `<circle cx="93" cy="35" r="8" fill="${gene.secondary}" opacity=".75"/><circle cx="69" cy="61" r="6" fill="${gene.secondary}" opacity=".68"/><text x="95" y="66" fill="#fff6b0" font-size="18">${star}</text>`;
+      }
+      if (gene.pattern === '条纹') return `<path d="M67 24 Q58 50 68 74 M91 20 Q82 50 92 79" fill="none" stroke="${gene.secondary}" stroke-width="10" opacity=".55"/>`;
+      return '';
+    }
+
+    function specialMarkup(gene) {
+      let markup = '';
+      if (gene.specialParts.includes('独角')) markup += '<path d="M118 20 L130 -4 L137 25" fill="#fff0a8" stroke="#8c7335" stroke-width="2"/>';
+      if (gene.specialParts.includes('皇冠')) markup += '<path d="M90 21 L94 2 L105 14 L116 1 L123 22Z" fill="#ffd24f" stroke="#8e6514" stroke-width="2"/>';
+      if (gene.specialParts.includes('长须')) markup += '<path d="M150 55 Q175 65 174 84 M149 60 Q169 78 158 94" fill="none" stroke="#eafcff" stroke-width="2"/>';
+      if (gene.specialParts.includes('发光鳍')) markup += '<path d="M83 27 Q101 -2 122 28" fill="#b9ffff" opacity=".8" filter="url(#glow)"/>';
+      return markup;
     }
 
     function fishSvg(gene) {
-      const pattern = gene.pattern === '斑点'
-        ? `<circle cx="93" cy="35" r="8" fill="${gene.secondary}" opacity=".75"/><circle cx="69" cy="61" r="6" fill="${gene.secondary}" opacity=".68"/>`
-        : gene.pattern === '条纹'
-          ? `<path d="M67 24 Q58 50 68 74 M91 20 Q82 50 92 79" fill="none" stroke="${gene.secondary}" stroke-width="10" opacity=".55"/>`
-          : '';
-      const tail = gene.fin === '月牙'
-        ? 'M44 50 Q13 15 19 8 Q52 23 55 50 Q52 77 19 92 Q13 85 44 50Z'
-        : gene.fin === '短鳍'
-          ? 'M50 50 L22 29 L27 50 L22 71 Z'
-          : 'M50 50 L13 15 L22 50 L13 85 Z';
-      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 100" role="img" aria-label="${gene.id}">
-        <defs><linearGradient id="body-${gene.id}" x1="0" x2="1"><stop stop-color="${gene.secondary}"/><stop offset=".5" stop-color="${gene.color}"/><stop offset="1" stop-color="${gene.color}"/></linearGradient></defs>
-        <path d="${tail}" fill="${gene.secondary}"/>
-        <ellipse cx="100" cy="50" rx="58" ry="34" fill="url(#body-${gene.id})"/>
-        ${pattern}
-        <path d="M87 24 Q105 2 117 25" fill="${gene.secondary}" opacity=".8"/>
-        <circle cx="137" cy="39" r="7" fill="#f4fdff"/><circle cx="139" cy="39" r="3" fill="#071824"/>
-        <path d="M149 58 Q157 63 164 56" fill="none" stroke="#572c3a" stroke-width="3" stroke-linecap="round"/>
+      const bodyRy = clamp(31 * gene.fatness * (gene.bodyShape === '圆胖' ? 1.08 : gene.bodyShape === '纤长' ? .8 : 1), 20, 43);
+      const bodyRx = gene.bodyShape === '纤长' ? 63 : gene.bodyShape === '圆胖' ? 53 : 58;
+      let tailPath = gene.tail === '月牙尾' ? 'M44 50 Q13 15 19 8 Q52 23 55 50 Q52 77 19 92 Q13 85 44 50Z'
+        : gene.tail === '短尾' ? 'M50 50 L22 29 L27 50 L22 71 Z'
+        : gene.tail === '彗星尾' ? 'M50 50 L4 4 L31 48 L5 96 L58 57Z'
+        : gene.tail === '双叶尾' ? 'M50 50 L10 7 L24 48 L10 93 L59 57Z'
+        : 'M50 50 L13 15 L22 50 L13 85 Z';
+      if (gene.specialParts.includes('双尾')) tailPath += ' M47 48 L10 28 L24 52 L12 74 L54 56Z';
+      const finPath = gene.fin === '长鳍' ? 'M83 27 Q95 -6 120 25' : gene.fin === '蝶鳍' ? 'M80 28 Q95 0 107 25 Q119 2 126 29' : gene.fin === '刺鳍' ? 'M77 29 L86 7 L96 26 L108 4 L122 28' : 'M88 28 Q103 12 116 28';
+      const mouthPath = gene.mouth === '嘟嘴' ? 'M151 55 Q170 49 153 64' : gene.mouth === '尖吻' ? 'M151 53 L171 59 L151 64' : gene.mouth === '方嘴' ? 'M150 54 H165 V64 H151' : 'M149 57 Q157 65 165 56';
+      const eyes = Array.from({ length: gene.eyeCount }, (_, index) => {
+        const row = index % 3;
+        const column = Math.floor(index / 3);
+        const x = 137 - column * 12;
+        const y = 35 + row * 10;
+        const radius = 5.7 * gene.eyeSize;
+        return `<circle cx="${x}" cy="${y}" r="${radius}" fill="#f4fdff"/><circle cx="${x + 1.5}" cy="${y}" r="${radius * .42}" fill="#071824"/>`;
+      }).join('');
+      const glow = gene.specialParts.includes('发光鳍') ? 'filter="url(#glow)"' : '';
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 100" role="img" aria-label="${escapeMarkup(gene.name)}">
+        <defs>
+          <linearGradient id="body-${gene.id}" x1="0" x2="1"><stop stop-color="${gene.secondary}"/><stop offset=".48" stop-color="${gene.color}"/><stop offset="1" stop-color="${gene.color}"/></linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <path d="${tailPath}" fill="${gene.secondary}" ${glow}/>
+        <ellipse cx="100" cy="50" rx="${bodyRx}" ry="${bodyRy}" fill="url(#body-${gene.id})" ${glow}/>
+        ${patternMarkup(gene)}
+        <path d="${finPath}" fill="${gene.secondary}" opacity=".85"/>
+        ${specialMarkup(gene)}
+        ${eyes}
+        <path d="${mouthPath}" fill="none" stroke="#572c3a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>`;
     }
 
-    function createFish(gene) {
+    function generationLabel(gene) {
+      return gene.generation === 0 ? '野生' : `第 ${gene.generation} 代`;
+    }
+
+    function createFish(gene, position = null) {
       if (FISHES.length >= MAX_FISH) {
         announce('鱼缸已满，请先放生一条鱼');
         return null;
       }
+      const rarity = rarityOf(gene);
+      const meta = RARITY_META[rarity];
       const node = document.createElement('button');
       node.type = 'button';
       node.className = 'fish';
-      node.innerHTML = fishSvg(gene);
-      node.setAttribute('aria-label', `选择鱼 ${gene.id}`);
+      node.innerHTML = `<span class="fish-art">${fishSvg(gene)}</span><span class="nameplate"><strong>${escapeMarkup(gene.name)}</strong><i class="rarity ${rarity}">${meta.label}</i><span>${generationLabel(gene)}</span></span>`;
+      node.setAttribute('aria-label', `选择${meta.label}鱼 ${gene.name}`);
       node.addEventListener('click', event => {
         event.stopPropagation();
-        selectFish(gene.id);
+        handleFishClick(gene.id, event.shiftKey);
       });
-
       const bounds = aquarium.getBoundingClientRect();
       const angle = range(0, Math.PI * 2);
       const entity = {
-        gene,
-        node,
-        x: range(90, Math.max(91, bounds.width - 90)),
-        y: range(65, Math.max(66, bounds.height - 105)),
-        vx: Math.cos(angle) * 35 * gene.speed,
-        vy: Math.sin(angle) * 13 * gene.speed,
-        targetVx: Math.cos(angle) * 45 * gene.speed,
-        targetVy: Math.sin(angle) * 18 * gene.speed,
-        wanderIn: range(2, 6),
-        facing: Math.cos(angle) < 0 ? -1 : 1
+        gene, node, art: node.querySelector('.fish-art'),
+        x: position?.x ?? range(90, Math.max(91, bounds.width - 90)),
+        y: position?.y ?? range(65, Math.max(66, bounds.height - 115)),
+        vx: Math.cos(angle) * 35 * gene.speed, vy: Math.sin(angle) * 13 * gene.speed,
+        targetVx: Math.cos(angle) * 45 * gene.speed, targetVy: Math.sin(angle) * 18 * gene.speed,
+        wanderIn: range(2, 6), facing: Math.cos(angle) < 0 ? -1 : 1
       };
       FISHES.push(entity);
       aquarium.append(node);
+      registerSpecies(gene);
       updatePopulation();
-      announce(`${gene.id} 已加入鱼缸`);
       return entity;
     }
 
-    function selectFish(id) {
+    function handleFishClick(id, shiftKey) {
+      if (shiftKey && selectedId && selectedId !== id) {
+        breedByIds(selectedId, id);
+        return;
+      }
+      if (pairMode) {
+        if (!parentIds.includes(id)) parentIds.push(id);
+        updateFishClasses();
+        if (parentIds.length === 1) announce('已选择第一位亲本，请选择第二条鱼');
+        if (parentIds.length === 2) breedByIds(parentIds[0], parentIds[1]);
+        return;
+      }
       selectedId = id;
-      for (const fish of FISHES) fish.node.classList.toggle('selected', fish.gene.id === id);
+      updateFishClasses();
       renderInspector();
     }
 
+    function breedByIds(fatherId, motherId) {
+      if (FISHES.length >= MAX_FISH) {
+        announce('鱼缸已满，无法孵化后代');
+        exitPairMode();
+        return;
+      }
+      const father = FISHES.find(fish => fish.gene.id === fatherId);
+      const mother = FISHES.find(fish => fish.gene.id === motherId);
+      if (!father || !mother || father === mother) return;
+      const childGene = crossGenes(father.gene, mother.gene);
+      const child = createFish(childGene, { x: (father.x + mother.x) / 2, y: (father.y + mother.y) / 2 });
+      if (!child) return;
+      const rarity = RARITY_META[rarityOf(childGene)].label;
+      const mutationText = childGene.mutations.length ? `，发生突变：${childGene.mutations.join('、')}` : '，没有发生突变';
+      announce(`${childGene.name} 诞生！稀有度：${rarity}${mutationText}`);
+      selectedId = childGene.id;
+      exitPairMode(false);
+      updateFishClasses();
+      renderInspector();
+    }
+
+    function togglePairMode() {
+      pairMode = !pairMode;
+      parentIds = [];
+      pairButton.classList.toggle('active', pairMode);
+      tankShell.classList.toggle('pairing', pairMode);
+      pairButton.textContent = pairMode ? '取消配对' : '💕 配对繁殖';
+      announce(pairMode ? '配对模式：请依次选择两条鱼' : '已退出配对模式');
+      updateFishClasses();
+    }
+
+    function exitPairMode(announceExit = true) {
+      pairMode = false;
+      parentIds = [];
+      pairButton.classList.remove('active');
+      tankShell.classList.remove('pairing');
+      pairButton.textContent = '💕 配对繁殖';
+      if (announceExit) announce('已退出配对模式');
+      updateFishClasses();
+    }
+
+    function updateFishClasses() {
+      for (const fish of FISHES) {
+        fish.node.classList.toggle('selected', fish.gene.id === selectedId);
+        fish.node.classList.toggle('parent', parentIds.includes(fish.gene.id));
+      }
+    }
+
     function clearSelection() {
+      if (pairMode) return;
       selectedId = null;
-      for (const fish of FISHES) fish.node.classList.remove('selected');
+      updateFishClasses();
       renderInspector();
     }
 
     function renderInspector() {
       const fish = FISHES.find(item => item.gene.id === selectedId);
       if (!fish) {
-        inspector.innerHTML = '<h2>基因观察台</h2><p class="empty">选择一条鱼后，可以查看它不随帧变化的基因、导出 SVG，或将它放生。</p>';
+        inspector.innerHTML = '<h2>基因观察台</h2><p class="empty">选择一条鱼查看它的基因、谱系和稀有度。按住 Shift 再点另一条鱼可以快速繁殖。</p>';
         return;
       }
       const gene = fish.gene;
+      const rarity = rarityOf(gene);
+      const meta = RARITY_META[rarity];
+      const mutation = gene.mutations.length ? gene.mutations.join('、') : '无';
       inspector.innerHTML = `
-        <h2>${gene.id}</h2>
-        <p class="empty">基因是身份；位置和速度是实时状态。</p>
+        <h2>${escapeMarkup(gene.name)} <i class="rarity ${rarity}">${meta.label}</i></h2>
+        <p class="empty">${escapeMarkup(gene.description)}</p>
         <dl class="gene-list">
-          <dt>主色</dt><dd><i class="swatch" style="background:${gene.color}"></i>${gene.color}</dd>
-          <dt>体型</dt><dd>${gene.size.toFixed(2)}</dd>
-          <dt>长宽比</dt><dd>${gene.aspect.toFixed(2)}</dd>
-          <dt>速度</dt><dd>${gene.speed.toFixed(2)}</dd>
-          <dt>性格</dt><dd>${gene.temperament}</dd>
+          <dt>编号 / 代数</dt><dd>${escapeMarkup(gene.id)} · ${generationLabel(gene)}</dd>
+          <dt>主色</dt><dd><i class="swatch" style="background:${gene.color}"></i>${escapeMarkup(gene.color)}</dd>
+          <dt>体型 / 胖瘦</dt><dd>${gene.bodyShape} · ${gene.fatness.toFixed(2)}</dd>
+          <dt>尺寸 / 速度</dt><dd>${gene.size.toFixed(2)} · ${gene.speed.toFixed(2)}</dd>
+          <dt>眼睛</dt><dd>${gene.eyeCount} × ${gene.eyeSize.toFixed(2)}</dd>
+          <dt>尾 / 鳍 / 嘴</dt><dd>${gene.tail} · ${gene.fin} · ${gene.mouth}</dd>
           <dt>花纹</dt><dd>${gene.pattern}</dd>
-          <dt>尾鳍</dt><dd>${gene.fin}</dd>
+          <dt>特殊部件</dt><dd>${gene.specialParts.join('、') || '无'}</dd>
+          <dt>突变记录</dt><dd>${escapeMarkup(mutation)}</dd>
         </dl>
         <div class="inspector-actions">
-          <button id="export-button" type="button">导出 SVG</button>
-          <button id="release-button" class="danger" type="button">放生这条鱼</button>
+          <button id="choose-mate" type="button">💕 为它选择配偶</button>
+          <button id="export-fish" type="button">导出 SVG</button>
+          <button id="release-fish" class="danger" type="button">放生这条鱼</button>
         </div>`;
-      document.querySelector('#export-button').addEventListener('click', () => exportFish(fish));
-      document.querySelector('#release-button').addEventListener('click', () => releaseFish(fish));
+      document.querySelector('#choose-mate').addEventListener('click', () => {
+        pairMode = true; parentIds = [gene.id]; pairButton.classList.add('active'); tankShell.classList.add('pairing'); pairButton.textContent = '取消配对';
+        updateFishClasses(); announce('已锁定第一位亲本，请选择第二条鱼');
+      });
+      document.querySelector('#export-fish').addEventListener('click', () => exportFish(fish));
+      document.querySelector('#release-fish').addEventListener('click', () => releaseFish(fish));
     }
 
     function exportFish(fish) {
-      const blob = new Blob([fishSvg(fish.gene)], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${fish.gene.id}.svg`;
-      link.click();
-      URL.revokeObjectURL(url);
-      announce(`${fish.gene.id} 的 SVG 已导出`);
+      const filename = `${fish.gene.id}-${fish.gene.name}`.replace(/[\\/:*?"<>|]/g, '_');
+      downloadBlob(`${filename}.svg`, fishSvg(fish.gene), 'image/svg+xml;charset=utf-8');
+      announce(`${fish.gene.name} 的 SVG 已导出`);
     }
 
     function releaseFish(fish) {
@@ -342,30 +579,114 @@
       if (index < 0) return;
       FISHES.splice(index, 1);
       fish.node.remove();
-      clearSelection();
-      updatePopulation();
-      announce(`${fish.gene.id} 已被放生`);
+      selectedId = null;
+      if (parentIds.includes(fish.gene.id)) exitPairMode(false);
+      updatePopulation(); updateFishClasses(); renderInspector(); announce(`${fish.gene.name} 已被放生`);
     }
 
-    function updatePopulation() {
-      population.textContent = `鱼群 ${FISHES.length} / ${MAX_FISH}`;
+    function registerSpecies(gene) {
+      const key = speciesKey(gene);
+      const existing = CODEX.get(key);
+      if (!existing || RARITY_META[rarityOf(gene)].rank > RARITY_META[rarityOf(existing)].rank) CODEX.set(key, cloneForStorage(gene));
+      renderCodex();
     }
 
-    function announce(text) {
-      message.textContent = text;
+    function cloneForStorage(gene) {
+      return JSON.parse(JSON.stringify(gene));
     }
 
-    // 游戏循环（核心！）
-    // 每一帧依次处理：意图 → 惯性 → 积分 → 碰壁 → 写回渲染。
+    function renderCodex() {
+      const genes = [...CODEX.values()].sort((a, b) => {
+        const rarityDiff = RARITY_META[rarityOf(b)].rank - RARITY_META[rarityOf(a)].rank;
+        return rarityDiff || a.name.localeCompare(b.name, 'zh-CN');
+      });
+      document.querySelector('#codex-count').textContent = genes.length;
+      if (!genes.length) {
+        codexGrid.innerHTML = '<p class="codex-empty">孵化第一条鱼后，物种会自动收录在这里。</p>';
+        return;
+      }
+      codexGrid.innerHTML = '';
+      for (const gene of genes) {
+        const rarity = rarityOf(gene);
+        const meta = RARITY_META[rarity];
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'species-card';
+        card.style.setProperty('--rarity-color', meta.color);
+        card.innerHTML = `${fishSvg(gene)}<span><strong>${escapeMarkup(gene.name)}</strong><small>${meta.label} · ${generationLabel(gene)}</small><small>${escapeMarkup(gene.bodyShape)} / ${escapeMarkup(gene.pattern)}</small></span>`;
+        card.title = '点击将该物种放入鱼缸';
+        card.addEventListener('click', () => {
+          const clone = cloneGene(gene);
+          if (createFish(clone)) announce(`从图鉴复育了 ${clone.name}`);
+        });
+        codexGrid.append(card);
+      }
+    }
+
+    function exportCodex() {
+      const payload = { format: 'fish-lab-codex', version: 1, exportedAt: new Date().toISOString(), species: [...CODEX.values()] };
+      downloadBlob('fish-lab-codex.json', JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+      announce(`已导出 ${CODEX.size} 个物种`);
+    }
+
+    async function importCodex(file) {
+      try {
+        const payload = JSON.parse(await file.text());
+        if (payload.format !== 'fish-lab-codex' || !Array.isArray(payload.species)) throw new Error('不是有效的 Fish Lab 图鉴文件');
+        let imported = 0;
+        for (const raw of payload.species) {
+          const gene = validateImportedGene(raw);
+          const key = speciesKey(gene);
+          const existing = CODEX.get(key);
+          if (!existing || RARITY_META[rarityOf(gene)].rank > RARITY_META[rarityOf(existing)].rank) CODEX.set(key, cloneForStorage(gene));
+          imported += 1;
+        }
+        renderCodex();
+        announce(`成功导入 ${imported} 个物种`);
+      } catch (error) {
+        announce(`导入失败：${error.message}`);
+      }
+    }
+
+    function validateImportedGene(raw) {
+      const required = ['name', 'color', 'secondary', 'bodyShape', 'tail', 'fin', 'mouth', 'pattern'];
+      if (!raw || required.some(key => typeof raw[key] !== 'string')) throw new Error('图鉴中存在不完整的基因数据');
+      const validColor = color => /^#[\da-f]{3}([\da-f]{3})?$/i.test(color) || /^hsl\(\s*[\d.]+(?:deg)?\s+[\d.]+%\s+[\d.]+%\s*\)$/i.test(color);
+      const allowed = (value, choices, fallback) => choices.includes(value) ? value : fallback;
+      return {
+        ...raw,
+        id: typeof raw.id === 'string' ? raw.id.replace(/[^a-z0-9_-]/gi, '').slice(0, 32) || 'IMPORTED' : 'IMPORTED',
+        name: raw.name.slice(0, 24), description: String(raw.description || '导入的物种').slice(0, 100),
+        generation: clamp(Number(raw.generation) || 0, 0, 999), parents: Array.isArray(raw.parents) ? raw.parents.map(String).slice(0, 2) : [],
+        mutations: Array.isArray(raw.mutations) ? raw.mutations.map(String).slice(0, 8) : [],
+        color: validColor(raw.color) ? raw.color : '#64d8ff', secondary: validColor(raw.secondary) ? raw.secondary : '#5267d8',
+        bodyShape: allowed(raw.bodyShape, BODY_SHAPES, '流线'), tail: allowed(raw.tail, [...TAILS, ...MUTANT_TAILS], '扇尾'),
+        fin: allowed(raw.fin, FINS, '短鳍'), mouth: allowed(raw.mouth, MOUTHS, '微笑'), pattern: allowed(raw.pattern, PATTERNS, '纯色'),
+        eyeCount: clamp(Math.round(Number(raw.eyeCount) || 1), 1, 6), size: clamp(Number(raw.size) || 1, .62, 1.42),
+        fatness: clamp(Number(raw.fatness) || 1, .62, 1.42), eyeSize: clamp(Number(raw.eyeSize) || 1, .62, 1.5),
+        speed: clamp(Number(raw.speed) || 1, .5, 1.58), temperament: String(raw.temperament || '未知').slice(0, 12),
+        specialParts: Array.isArray(raw.specialParts) ? raw.specialParts.filter(part => SPECIAL_PARTS.includes(part)) : []
+      };
+    }
+
+    function downloadBlob(filename, content, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function updatePopulation() { population.textContent = `鱼群 ${FISHES.length} / ${MAX_FISH}`; }
+    function announce(text) { message.textContent = text; }
+
+    // 游戏循环：意图 → 惯性 → 积分 → 碰壁 → 写回渲染。
     function tick(now) {
-      const dt = Math.min((now - lastTime) / 1000, .05); // 秒；保证不同刷新率下速度一致
+      const dt = Math.min((now - lastTime) / 1000, .05);
       lastTime = now;
       const bounds = aquarium.getBoundingClientRect();
-
       for (const fish of FISHES) {
         const { gene } = fish;
-
-        // 1. 意图：wander 每 2~6 秒产生一个新的目标速度。
         fish.wanderIn -= dt;
         if (fish.wanderIn <= 0) {
           const direction = Math.random() < .5 ? -1 : 1;
@@ -373,37 +694,26 @@
           fish.targetVy = range(-22, 22) * gene.speed;
           fish.wanderIn = range(2, 6);
         }
-
-        // 2. 惯性：用指数平滑让当前速度逐渐靠近目标速度。
         const easing = 1 - Math.exp(-2.4 * dt);
         fish.vx += (fish.targetVx - fish.vx) * easing;
         fish.vy += (fish.targetVy - fish.vy) * easing;
-
-        // 3. 积分：位置 += 速度 × dt（帧率无关）。
         fish.x += fish.vx * dt;
         fish.y += fish.vy * dt;
-
-        // 4. 碰壁反弹：当前速度和目标速度同时反向，防止贴墙抽搐。
-        const halfWidth = 64 * gene.size * gene.aspect;
-        const halfHeight = 38 * gene.size;
+        const halfWidth = 68 * gene.size;
+        const halfHeight = 39 * gene.size;
         const minX = halfWidth;
         const maxX = Math.max(minX, bounds.width - halfWidth);
         const minY = halfHeight;
-        const maxY = Math.max(minY, bounds.height - halfHeight - 38);
+        const maxY = Math.max(minY, bounds.height - halfHeight - 42);
         if (fish.x <= minX || fish.x >= maxX) {
-          fish.x = clamp(fish.x, minX, maxX);
-          fish.vx *= -1;
-          fish.targetVx *= -1;
+          fish.x = clamp(fish.x, minX, maxX); fish.vx *= -1; fish.targetVx *= -1;
         }
         if (fish.y <= minY || fish.y >= maxY) {
-          fish.y = clamp(fish.y, minY, maxY);
-          fish.vy *= -1;
-          fish.targetVy *= -1;
+          fish.y = clamp(fish.y, minY, maxY); fish.vy *= -1; fish.targetVy *= -1;
         }
         if (Math.abs(fish.vx) > 2) fish.facing = fish.vx < 0 ? -1 : 1;
-
-        // 5. 写回渲染：逻辑更新结束后统一更新 DOM；向左游时水平翻转。
-        fish.node.style.transform = `translate3d(${fish.x - 75}px, ${fish.y - 42}px, 0) scale(${fish.facing * gene.size * gene.aspect}, ${gene.size})`;
+        fish.node.style.transform = `translate3d(${fish.x - 75}px, ${fish.y - 42}px, 0) scale(${gene.size})`;
+        fish.art.style.transform = `scaleX(${fish.facing * (gene.bodyShape === '纤长' ? 1.13 : gene.bodyShape === '圆胖' ? .94 : 1)})`;
         fish.node.style.zIndex = String(Math.round(fish.y));
       }
       requestAnimationFrame(tick);
@@ -411,29 +721,36 @@
 
     document.querySelector('#hatch-form').addEventListener('submit', event => {
       event.preventDefault();
-      const description = document.querySelector('#description').value.trim();
-      createFish(randomGene(description));
+      const gene = randomGene(document.querySelector('#description').value.trim());
+      if (createFish(gene)) announce(`${gene.name} 已孵化，稀有度：${RARITY_META[rarityOf(gene)].label}`);
     });
-
     document.querySelector('#mutate-button').addEventListener('click', () => {
       const selected = FISHES.find(fish => fish.gene.id === selectedId);
-      createFish(mutateGene(selected?.gene));
+      const gene = selected ? crossGenes(selected.gene, randomGene('神秘野生鱼')) : randomGene('突变的野生鱼');
+      if (createFish(gene)) announce(`${gene.name} 已加入鱼缸，稀有度：${RARITY_META[rarityOf(gene)].label}`);
     });
-
+    pairButton.addEventListener('click', togglePairMode);
     aquarium.addEventListener('click', clearSelection);
+    document.querySelector('#export-codex').addEventListener('click', exportCodex);
+    document.querySelector('#import-codex').addEventListener('click', () => document.querySelector('#codex-file').click());
+    document.querySelector('#codex-file').addEventListener('change', event => {
+      const [file] = event.target.files;
+      if (file) importCodex(file);
+      event.target.value = '';
+    });
     window.addEventListener('resize', () => {
       const bounds = aquarium.getBoundingClientRect();
       for (const fish of FISHES) {
         fish.x = clamp(fish.x, 40, Math.max(40, bounds.width - 40));
-        fish.y = clamp(fish.y, 35, Math.max(35, bounds.height - 75));
+        fish.y = clamp(fish.y, 35, Math.max(35, bounds.height - 80));
       }
     });
 
-    // 开场自带三条随机鱼。
     requestAnimationFrame(() => {
       createFish(randomGene('金色活泼小鱼'));
       createFish(randomGene('蓝色瘦长安静'));
       createFish(randomGene('红色圆滚滚'));
+      announce('三条野生鱼已经入住，试试配对繁殖');
       lastTime = performance.now();
       requestAnimationFrame(tick);
     });
