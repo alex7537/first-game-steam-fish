@@ -25,6 +25,7 @@
 - 真实鱼类馆提供 10 个手工调校的物种模板，可作为育种母本重复入缸
 - 选中鱼后可定向衍生“新种”：色相漂移、1–2 个性状变化并增减特殊部件
 - 配置 API Key 后可上传 JPEG、PNG、GIF 或 WebP 照片，由 Claude 视觉转成基因
+- 孵化按钮会明确显示 AI/离线模式；AI 失败不会静默降级，只有用户确认后才改用离线解析
 
 ## 玩法
 
@@ -73,6 +74,8 @@ python -m http.server 8000
 
 ```js
 {
+  schemaVersion: 2,
+  generatedBy: "ai", // ai / local / bred / evolved
   id: "FL-023",
   name: "泡泡仙鱼",
   generation: 2,
@@ -104,6 +107,7 @@ python -m http.server 8000
 - [x] 物种图鉴与稀有度
 - [x] 真实鱼类模板、定向衍生与照片转基因
 - [ ] 正式本地存档
+- [ ] 可选的 OpenAI API 解析器
 - [ ] 成长、饥饿和互动循环
 - [ ] 音效、音乐与完整美术风格
 - [ ] 桌面版封装和 Steamworks 接入

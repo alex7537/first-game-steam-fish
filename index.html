@@ -14,6 +14,8 @@
     .lead,.hint,.empty { color:#91b4c2; }
     .title-row { display:flex; align-items:end; justify-content:space-between; gap:16px; }
     .toolbar { display:grid; grid-template-columns:1fr repeat(6,auto); gap:9px; margin:20px 0 12px; }
+    .hatch-action { display:grid; gap:3px; }
+    .hatch-action small { color:#91b4c2; font-size:.72rem; text-align:center; }
     input,button { border:1px solid #28566c; border-radius:11px; font:inherit; }
     input { min-width:0; padding:12px 14px; color:#fff; background:#071b29; }
     button { padding:10px 14px; color:#effcff; background:#0b2a3c; cursor:pointer; }
@@ -51,8 +53,9 @@
     .species svg { width:58px; height:44px; overflow:visible; }
     .species strong,.species small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .species small { color:var(--rarity); }
-    #error-toast { position:fixed; z-index:999; right:18px; bottom:18px; max-width:min(440px,90vw); padding:12px 15px; border:1px solid #ff6c6c; border-radius:10px; color:#ffe7e7; background:#5b1720; opacity:0; transform:translateY(12px); pointer-events:none; transition:.2s; }
-    #error-toast.show { opacity:1; transform:none; }
+    #error-toast { position:fixed; z-index:999; right:18px; bottom:18px; display:grid; gap:10px; max-width:min(440px,90vw); padding:12px 15px; border:1px solid #ff6c6c; border-radius:10px; color:#ffe7e7; background:#5b1720; opacity:0; transform:translateY(12px); pointer-events:none; transition:.2s; }
+    #error-toast.show { opacity:1; transform:none; pointer-events:auto; }
+    #error-toast button { justify-self:start; color:#2b1200; border-color:#ffd2a1; background:#ffbd72; font-weight:700; }
     @media (max-width:780px) { .toolbar{grid-template-columns:1fr 1fr}.toolbar input{grid-column:1/-1}.workspace{grid-template-columns:1fr} }
   </style>
 </head>
@@ -65,7 +68,7 @@
 
     <form class="toolbar" id="hatch-form">
       <input id="description" value="一条圆滚滚、金色、活泼的小鱼" maxlength="80" aria-label="鱼的描述">
-      <button class="primary" type="submit">孵化新鱼</button>
+      <span class="hatch-action"><button class="primary" id="hatch-button" type="submit">离线孵化</button><small id="hatch-mode">关键词模式</small></span>
       <button id="random-button" type="button">随机变异</button>
       <button id="api-button" type="button">⚙ API Key</button>
       <button id="pair-button" type="button">💕 配对繁殖</button>
@@ -105,6 +108,8 @@
 
   <script>
     const MAX_FISH = 12;
+    const SCHEMA_VERSION = 2;
+    const GENERATED_BY = ['ai','local','bred','evolved'];
     const FISHES = [];
     const CODEX = new Map();
     const SHAPES = ['流线','圆胖','纤长','侧扁'];
@@ -134,6 +139,9 @@
     const tank = document.querySelector('#tank');
     const inspector = document.querySelector('#inspector');
     const pairButton = document.querySelector('#pair-button');
+    const hatchButton = document.querySelector('#hatch-button');
+    const hatchMode = document.querySelector('#hatch-mode');
+    const modeBadge = document.querySelector('#mode-badge');
     let selected = null;
     let pairing = false;
     let firstParent = null;
@@ -187,7 +195,7 @@
       const pattern=has(text,['条纹'])?'条纹':has(text,['斑点','斑纹'])?'斑点':pick(PATTERNS);
       const parts=PARTS.filter(part=>text.includes(part)||(part==='发光鳍'&&text.includes('发光')));
       if(!parts.length&&Math.random()<.06) parts.push(pick(PARTS));
-      return {id:id(),name,generation:0,parents:[],mutations:[],color,accent,
+      return {schemaVersion:SCHEMA_VERSION,generatedBy:'local',id:id(),name,generation:0,parents:[],mutations:[],color,accent,
         shape:fatness>1.2?'圆胖':fatness<.8?'纤长':pick(SHAPES),tail:pick(TAILS),fin:pick(FINS),mouth:pick(MOUTHS),pattern,
         eyeCount,size:has(text,['小'])?.72:has(text,['大'])?1.28:range(.85,1.12),fatness,eyeSize:range(.8,1.2),
         speed:has(text,['安静','慢'])?.62:has(text,['活泼','快'])?1.38:range(.8,1.15),parts};
@@ -212,6 +220,8 @@
         mutations.push('眼数');
       }
       return {
+        schemaVersion:SCHEMA_VERSION,
+        generatedBy:'bred',
         id:id(),
         name:a.name.slice(0,2)+b.name.slice(-2),
         generation:Math.max(a.generation,b.generation)+1,
@@ -233,6 +243,7 @@
       };
     }
 
+    // 出生方式不属于物种特征，generatedBy 不参与图鉴去重。
     function speciesKey(g) { return [g.shape,g.tail,g.fin,g.mouth,g.pattern,g.eyeCount,[...g.parts].sort().join('+')].join('|'); }
     function rarityOf(g) {
       let score=g.parts.length*2+g.mutations.length*3+(MUTANT_TAILS.includes(g.tail)?2:0)+(g.eyeCount>=4?1:0);
@@ -240,16 +251,16 @@
       if(g.size<.72||g.size>1.3) score++; if(g.fatness<.72||g.fatness>1.3) score++;
       return score>=9?'legendary':score>=6?'epic':score>=3?'rare':'common';
     }
-    function copyGene(g) { return {...g,id:id(),parents:[...g.parents],mutations:[...g.mutations],parts:[...g.parts]}; }
+    function copyGene(g,generatedBy=g.generatedBy) { return {...g,schemaVersion:SCHEMA_VERSION,generatedBy,id:id(),parents:[...g.parents],mutations:[...g.mutations],parts:[...g.parts]}; }
 
     function realGene(template,geneId=id()) {
-      return {id:geneId,name:template.name,generation:0,parents:[],mutations:[],eyeCount:1,eyeSize:1,
+      return {schemaVersion:SCHEMA_VERSION,generatedBy:'local',id:geneId,name:template.name,generation:0,parents:[],mutations:[],eyeCount:1,eyeSize:1,
         color:template.color,accent:template.accent,shape:template.shape,tail:template.tail,fin:template.fin,mouth:template.mouth,pattern:template.pattern,
         size:template.size,fatness:template.fatness,speed:template.speed,parts:[...(template.parts||[])]};
     }
 
     function deriveGene(parent) {
-      const gene=copyGene(parent);
+      const gene=copyGene(parent,'evolved');
       gene.name=`新种·${parent.name.replace('新种·','').slice(0,4)}`;
       gene.generation=parent.generation+1;
       gene.parents=[parent.id];
@@ -352,7 +363,8 @@
       const fish=FISHES.find(f=>f.gene.id===selected);
       if(!fish) { inspector.innerHTML='<h2>基因观察台</h2><p class="empty">点击一条鱼查看基因。选中后 Shift+点击另一条可快速繁殖。</p>'; return; }
       const g=fish.gene, rarity=RARITIES[rarityOf(g)];
-      inspector.innerHTML=`<h2>${clean(g.name)} <span class="badge" style="--rarity:${rarity.color}">${rarity.label}</span></h2><dl><dt>编号 / 代数</dt><dd>${g.id} / ${g.generation||'野生'}</dd><dt>体型</dt><dd>${g.shape} · ${g.fatness.toFixed(2)}</dd><dt>尺寸 / 速度</dt><dd>${g.size.toFixed(2)} / ${g.speed.toFixed(2)}</dd><dt>眼睛</dt><dd>${g.eyeCount} × ${g.eyeSize.toFixed(2)}</dd><dt>尾 / 鳍 / 嘴</dt><dd>${g.tail} / ${g.fin} / ${g.mouth}</dd><dt>花纹 / 部件</dt><dd>${g.pattern} / ${g.parts.join('、')||'无'}</dd></dl><div class="inspector-actions"><button id="mate">💕 选择配偶</button><button id="export-fish">导出 SVG</button><button id="release" class="danger">放生</button></div>`;
+      const source={ai:'AI 孵化',local:'离线生成',bred:'配对繁殖',evolved:'定向衍生'}[g.generatedBy]||'未知';
+      inspector.innerHTML=`<h2>${clean(g.name)} <span class="badge" style="--rarity:${rarity.color}">${rarity.label}</span></h2><dl><dt>编号 / 代数</dt><dd>${g.id} / ${g.generation||'野生'}</dd><dt>来源 / Schema</dt><dd>${source} / v${g.schemaVersion}</dd><dt>体型</dt><dd>${g.shape} · ${g.fatness.toFixed(2)}</dd><dt>尺寸 / 速度</dt><dd>${g.size.toFixed(2)} / ${g.speed.toFixed(2)}</dd><dt>眼睛</dt><dd>${g.eyeCount} × ${g.eyeSize.toFixed(2)}</dd><dt>尾 / 鳍 / 嘴</dt><dd>${g.tail} / ${g.fin} / ${g.mouth}</dd><dt>花纹 / 部件</dt><dd>${g.pattern} / ${g.parts.join('、')||'无'}</dd></dl><div class="inspector-actions"><button id="mate">💕 选择配偶</button><button id="export-fish">导出 SVG</button><button id="release" class="danger">放生</button></div>`;
       document.querySelector('#mate').onclick=()=>{setPairMode(true,false);firstParent=g.id;updateUI();say('已选择第一位亲本')};
       document.querySelector('#export-fish').onclick=()=>download(`${g.id}.svg`,fishSvg(g),'image/svg+xml');
       document.querySelector('#release').onclick=()=>{FISHES.splice(FISHES.indexOf(fish),1);fish.node.remove();selected=null;setPairMode(false,false);say(`${g.name} 已放生`)};
@@ -362,7 +374,7 @@
       const genes=[...CODEX.values()].sort((a,b)=>RARITIES[rarityOf(b)].rank-RARITIES[rarityOf(a)].rank);
       document.querySelector('#codex-count').textContent=genes.length;
       const grid=document.querySelector('#codex-grid'); grid.innerHTML=genes.length?'':'<p class="empty">还没有收录物种。</p>';
-      genes.forEach(g=>{const rarity=RARITIES[rarityOf(g)],button=document.createElement('button');button.className='species';button.style.setProperty('--rarity',rarity.color);button.innerHTML=`${fishSvg(g)}<span><strong>${clean(g.name)}</strong><small>${rarity.label} · ${g.generation?`第 ${g.generation} 代`:'野生'}</small></span>`;button.onclick=()=>{const clone=copyGene(g);if(addFish(clone))say(`复育了 ${clone.name}`)};grid.append(button)});
+      genes.forEach(g=>{const rarity=RARITIES[rarityOf(g)],button=document.createElement('button');button.className='species';button.style.setProperty('--rarity',rarity.color);button.innerHTML=`${fishSvg(g)}<span><strong>${clean(g.name)}</strong><small>${rarity.label} · ${g.generation?`第 ${g.generation} 代`:'野生'}</small></span>`;button.onclick=()=>{const clone=copyGene(g,'bred');if(addFish(clone))say(`复育了 ${clone.name}`)};grid.append(button)});
     }
 
     function renderRealFish() {
@@ -380,7 +392,9 @@
     function normalizeGene(raw) {
       const color=x=>/^#[\da-f]{3}([\da-f]{3})?$/i.test(x)||/^hsl\([\d.]+ [\d.]+% [\d.]+%\)$/.test(x);
       if(!raw||!SHAPES.includes(raw.shape)||!color(raw.color)||!color(raw.accent)) return null;
+      const generatedBy=GENERATED_BY.includes(raw.generatedBy)?raw.generatedBy:'local';
       return {
+        schemaVersion:SCHEMA_VERSION, generatedBy,
         id:id(), name:clean(raw.name)||'导入鱼', generation:clamp(Math.round(+raw.generation||0),0,999),
         parents:Array.isArray(raw.parents)?raw.parents.map(clean).slice(0,2):[],
         mutations:Array.isArray(raw.mutations)?raw.mutations.map(clean).slice(0,8):[],
@@ -396,48 +410,70 @@
 
     function download(name,text,type) { const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500); }
     function say(text) { document.querySelector('#message').textContent=text; }
-    function showError(error) {
+    function showError(error,fallback) {
       const toast=document.querySelector('#error-toast');
-      toast.textContent=`脚本错误：${error?.message||error}`;
+      toast.replaceChildren();
+      const message=document.createElement('span');
+      message.textContent=error?.message||String(error);
+      toast.append(message);
+      if(fallback) {
+        const button=document.createElement('button');
+        button.type='button';
+        button.textContent='改用离线解析生成';
+        button.onclick=()=>{toast.classList.remove('show');fallback()};
+        toast.append(button);
+      }
       toast.classList.add('show');
-      setTimeout(()=>toast.classList.remove('show'),6000);
+      if(!fallback) setTimeout(()=>toast.classList.remove('show'),6000);
+    }
+
+    function updateHatchMode() {
+      hatchButton.textContent=apiKey?'AI 孵化':'离线孵化';
+      hatchMode.textContent=apiKey?'Claude Haiku 4.5':'关键词模式';
+      modeBadge.textContent=apiKey?'Claude AI 已配置':'离线本地解析';
+      modeBadge.classList.toggle('ai',Boolean(apiKey));
+    }
+
+    function apiError(status,detail='') {
+      const suffix=detail?`（${clean(detail)}）`:'';
+      if(status===401) return Error(`AI 孵化失败：API Key 无效，请重新配置${suffix}`);
+      if(status===429) return Error(`AI 孵化失败：请求被限流或额度不足，请稍后重试${suffix}`);
+      return Error(`AI 孵化失败：Anthropic API 返回 ${status}${suffix}`);
     }
 
     const GENE_SCHEMA_TEXT=`字段：name；color/accent 为十六进制颜色；shape 取 ${SHAPES.join('/')}；tail 取 ${[...TAILS,...MUTANT_TAILS].join('/')}；fin 取 ${FINS.join('/')}；mouth 取 ${MOUTHS.join('/')}；pattern 取 ${PATTERNS.join('/')}；eyeCount 1-6；size/fatness/eyeSize/speed 取 0.7-1.4；parts 为 ${PARTS.join('/')} 的数组。`;
 
     async function askClaude(content) {
-      const response=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:350,messages:[{role:'user',content}]})
-      });
-      if(!response.ok) throw Error(`API ${response.status}`);
+      let response;
+      try {
+        response=await fetch('https://api.anthropic.com/v1/messages',{
+          method:'POST',
+          headers:{'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:350,messages:[{role:'user',content}]})
+        });
+      } catch {
+        throw Error('AI 孵化失败：网络无法连接 Anthropic API，请检查网络、代理或浏览器拦截设置');
+      }
+      if(!response.ok) {
+        const body=await response.json().catch(()=>null);
+        throw apiError(response.status,body?.error?.message);
+      }
       const data=await response.json();
       const text=data.content?.find(block=>block.type==='text')?.text||'';
       const match=text.match(/\{[\s\S]*\}/);
-      if(!match) throw Error('API 未返回 JSON');
-      return JSON.parse(match[0]);
+      if(!match) throw Error('AI 孵化失败：Claude 未返回基因 JSON');
+      try { return JSON.parse(match[0]); }
+      catch { throw Error('AI 孵化失败：Claude 返回了无法解析的基因 JSON'); }
     }
 
     async function parseGene(text) {
       if(!apiKey) {
-        say('离线本地解析：支持真实物种名、颜色、体型、眼数、条纹和发光等关键词');
         return localParse(text);
       }
-      try {
-        const gene=normalizeGene({...localParse(text),...await askClaude(`把鱼类描述转成 JSON，不要解释：${text}\n${GENE_SCHEMA_TEXT}`)});
-        if(!gene) throw Error('API 基因格式无效');
-        document.querySelector('#mode-badge').textContent='Claude AI 解析';
-        document.querySelector('#mode-badge').classList.add('ai');
-        say('Claude AI 解析成功');
-        return gene;
-      } catch(error) {
-        showError(error);
-        document.querySelector('#mode-badge').textContent='AI 失败 · 离线解析';
-        document.querySelector('#mode-badge').classList.remove('ai');
-        say('AI 解析失败，已回退到离线本地解析');
-        return localParse(text);
-      }
+      const raw=await askClaude(`把鱼类描述转成 JSON，不要解释：${text}\n${GENE_SCHEMA_TEXT}`);
+      const gene=normalizeGene({...localParse(text),...raw,generatedBy:'ai'});
+      if(!gene) throw Error('AI 孵化失败：Claude 返回的基因字段不符合 Fish Lab Schema');
+      return gene;
     }
 
     async function photoToGene(file) {
@@ -451,7 +487,7 @@
         {type:'image',source:{type:'base64',media_type:file.type,data:btoa(binary)}},
         {type:'text',text:`识别照片中最主要的鱼，并转成 Fish Lab 基因 JSON，不要解释。${GENE_SCHEMA_TEXT}`}
       ]);
-      const gene=normalizeGene({...localParse('照片鱼'),...raw});
+      const gene=normalizeGene({...localParse('照片鱼'),...raw,generatedBy:'ai'});
       if(!gene) throw Error('照片识别结果不是有效基因');
       return gene;
     }
@@ -514,14 +550,32 @@
       }
     }
 
-    document.querySelector('#hatch-form').onsubmit=async event=>{event.preventDefault();const g=await parseGene(document.querySelector('#description').value.trim());if(addFish(g)&&apiKey)say(`${g.name} 已通过 AI 孵化`)};
+    document.querySelector('#hatch-form').onsubmit=async event=>{
+      event.preventDefault();
+      const text=document.querySelector('#description').value.trim();
+      const useAI=Boolean(apiKey);
+      hatchButton.disabled=true;
+      hatchButton.textContent=useAI?'AI 解析中…':'离线解析中…';
+      try {
+        const gene=await parseGene(text);
+        if(addFish(gene)) say(useAI?`${gene.name} 已通过 AI 孵化`:`${gene.name} 已通过离线关键词模式孵化`);
+      } catch(error) {
+        say('AI 孵化失败，未生成鱼');
+        showError(error,()=>{
+          const gene=localParse(text);
+          if(addFish(gene)) say(`${gene.name} 已按你的选择改用离线解析生成`);
+        });
+      } finally {
+        hatchButton.disabled=false;
+        updateHatchMode();
+      }
+    };
     document.querySelector('#random-button').onclick=()=>{const g=localParse('随机变异');if(addFish(g))say(`${g.name} 已加入鱼缸`)};
     document.querySelector('#api-button').onclick=()=>{
       const key=prompt('输入 Anthropic API Key。仅保存在页面内存，但浏览器直连仍可能暴露给页面脚本或扩展；正式发布请使用后端代理。',apiKey);
       if(key===null) return;
       apiKey=key.trim();
-      document.querySelector('#mode-badge').textContent=apiKey?'API Key 已配置':'离线本地解析';
-      document.querySelector('#mode-badge').classList.toggle('ai',Boolean(apiKey));
+      updateHatchMode();
       say(apiKey?'API Key 已载入内存，刷新后失效':'已清除 API Key');
     };
     document.querySelector('#derive-button').onclick=()=>{
@@ -541,12 +595,13 @@
     };
     pairButton.onclick=()=>setPairMode(!pairing);
     aquarium.onclick=()=>{if(!pairing){selected=null;updateUI()}};
-    document.querySelector('#export-codex').onclick=()=>download('fish-lab-codex.json',JSON.stringify({version:1,species:[...CODEX.values()]},null,2),'application/json');
+    document.querySelector('#export-codex').onclick=()=>download('fish-lab-codex.json',JSON.stringify({schemaVersion:SCHEMA_VERSION,species:[...CODEX.values()]},null,2),'application/json');
     document.querySelector('#import-codex').onclick=()=>document.querySelector('#codex-file').click();
     document.querySelector('#codex-file').onchange=async event=>{try{const data=JSON.parse(await event.target.files[0].text());if(!Array.isArray(data.species))throw Error();data.species.map(normalizeGene).filter(Boolean).forEach(g=>CODEX.set(speciesKey(g),g));renderCodex();say('图鉴导入成功')}catch{say('图鉴文件无效')}event.target.value=''};
 
     window.addEventListener('error',event=>showError(event.error||event.message));
     window.addEventListener('unhandledrejection',event=>showError(event.reason));
+    updateHatchMode();
     renderRealFish();
     requestAnimationFrame(()=>{addFish(localParse('金色活泼小鱼'));addFish(localParse('蓝色瘦长安静'));addFish(localParse('红色圆滚滚'));say('三条野生鱼已经入住');lastTime=performance.now();requestAnimationFrame(tick)});
   </script>
