@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fish Lab v0.4.1</title>
+  <title>Fish Lab v0.4.2</title>
   <style>
     :root { color-scheme: dark; font-family: system-ui, sans-serif; --blue:#72e4ff; --orange:#ffad4d; }
     * { box-sizing: border-box; }
@@ -111,7 +111,7 @@
     const SCHEMA_VERSION = 2;
     const GENERATED_BY = ['ai','local','bred','evolved'];
     const ANTHROPIC_BASE_URL = 'https://right.codes/claude';
-    const ANTHROPIC_MODEL = 'claude-haiku-4-5';
+    const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
     const MAX_IMAGE_EDGE = 1024;
     const MAX_IMAGE_BYTES = 4*1024*1024;
     const FISHES = [];
@@ -485,7 +485,7 @@
       const suffix=detail?`（${clean(detail)}）`:'';
       if(status===401) return Error(`AI 孵化失败：API Key 无效，请重新配置${suffix}`);
       if(status===429) return Error(`AI 孵化失败：请求被限流或额度不足，请稍后重试${suffix}`);
-      return Error(`AI 孵化失败：Anthropic API 返回 ${status}${suffix}`);
+      return Error(`AI 孵化失败：Right Code 返回 ${status}${suffix}`);
     }
 
     const GENE_SCHEMA_TEXT=`字段：name；color/accent 为十六进制颜色；shape 取 ${SHAPES.join('/')}；tail 取 ${[...TAILS,...MUTANT_TAILS].join('/')}；fin 取 ${FINS.join('/')}；mouth 取 ${MOUTHS.join('/')}；pattern 取 ${PATTERNS.join('/')}；eyeCount 1-6；size/fatness/eyeSize/speed 取 0.7-1.4；parts 为 ${PARTS.join('/')} 的数组。`;
@@ -495,7 +495,7 @@
       try {
         response=await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`,{
           method:'POST',
-          headers:{'content-type':'application/json','authorization':`Bearer ${apiKey}`,'x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          headers:{'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
           body:JSON.stringify({model:ANTHROPIC_MODEL,max_tokens:350,messages:[{role:'user',content}]})
         });
       } catch {
@@ -503,7 +503,8 @@
       }
       if(!response.ok) {
         const body=await response.json().catch(()=>null);
-        throw apiError(response.status,body?.error?.message);
+        const detail=typeof body?.error==='string'?body.error:body?.error?.message||body?.message;
+        throw apiError(response.status,detail);
       }
       const data=await response.json();
       const text=data.content?.find(block=>block.type==='text')?.text||'';
@@ -638,7 +639,7 @@
     };
     document.querySelector('#random-button').onclick=()=>{const g=localParse('随机变异');if(addFish(g))say(`${g.name} 已加入鱼缸`)};
     document.querySelector('#api-button').onclick=()=>{
-      const key=prompt('输入 Anthropic Auth Token。仅保存在页面内存，但浏览器直连仍可能暴露给页面脚本或扩展；正式发布请使用后端代理。',apiKey);
+      const key=prompt('输入 Right Code API Key。仅保存在页面内存，但浏览器直连仍可能暴露给页面脚本或扩展；正式发布请使用后端代理。',apiKey);
       if(key===null) return;
       apiKey=key.trim();
       updateHatchMode();
