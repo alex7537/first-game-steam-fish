@@ -8,6 +8,10 @@
 
 版本变更记录见 [`change.md`](change.md)。
 
+完整系统结构与功能边界见 [`整体架构.md`](整体架构.md)。
+
+后续设计规格见 [`v0.5 存档与成长循环`](update-vision/fish-lab-v0.5-design.md) 和 [`v0.6 Schema v3 多体型`](update-vision/fish-lab-v0.6-schema-v3-design.md)；设计稿不代表功能已经落地。
+
 ## v0.4.2 功能
 
 - 开场生成三条随机鱼，鱼缸上限为 12 条
