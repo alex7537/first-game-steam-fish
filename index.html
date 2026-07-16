@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fish Lab v0.4</title>
+  <title>Fish Lab v0.4.1</title>
   <style>
     :root { color-scheme: dark; font-family: system-ui, sans-serif; --blue:#72e4ff; --orange:#ffad4d; }
     * { box-sizing: border-box; }
@@ -112,6 +112,8 @@
     const GENERATED_BY = ['ai','local','bred','evolved'];
     const ANTHROPIC_BASE_URL = 'https://right.codes/claude';
     const ANTHROPIC_MODEL = 'claude-haiku-4-5';
+    const MAX_IMAGE_EDGE = 1024;
+    const MAX_IMAGE_BYTES = 4*1024*1024;
     const FISHES = [];
     const CODEX = new Map();
     const SHAPES = ['流线','圆胖','纤长','侧扁'];
@@ -410,6 +412,49 @@
       };
     }
 
+    function migrateGeneV1toV2(raw) {
+      if(!raw||typeof raw!=='object') throw Error('v1 图鉴中存在无效基因');
+      const gene=normalizeGene({
+        schemaVersion:SCHEMA_VERSION,
+        generatedBy:'local',
+        name:raw.name,
+        generation:raw.generation,
+        parents:raw.parents,
+        mutations:raw.mutations,
+        color:raw.color,
+        accent:raw.secondary,
+        shape:raw.bodyShape,
+        tail:raw.tail,
+        fin:raw.fin,
+        mouth:raw.mouth,
+        pattern:raw.pattern,
+        eyeCount:raw.eyeCount,
+        size:raw.size,
+        fatness:raw.fatness,
+        eyeSize:raw.eyeSize,
+        speed:raw.speed,
+        parts:raw.specialParts
+      });
+      if(!gene) throw Error(`无法迁移 v1 基因：${clean(raw.name)||'未命名鱼'}`);
+      return gene;
+    }
+
+    function importCodexData(data) {
+      if(!data||!Array.isArray(data.species)) throw Error('不是有效的 Fish Lab 图鉴文件');
+      const isV1=data.format==='fish-lab-codex'&&data.version===1;
+      const isV2=data.schemaVersion===SCHEMA_VERSION;
+      if(!isV1&&!isV2) throw Error('无法识别图鉴 Schema 版本');
+      const genes=data.species.map(raw=>{
+        if(isV1) return migrateGeneV1toV2(raw);
+        if(raw?.schemaVersion!==SCHEMA_VERSION) throw Error('v2 图鉴中存在无法识别的基因版本');
+        return normalizeGene(raw);
+      });
+      if(genes.some(gene=>!gene)) throw Error('v2 图鉴中存在无效基因');
+      genes.forEach(gene=>CODEX.set(speciesKey(gene),gene));
+      renderCodex();
+      return {count:genes.length,migrated:isV1};
+    }
+
     function download(name,text,type) { const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500); }
     function say(text) { document.querySelector('#message').textContent=text; }
     function showError(error,fallback) {
@@ -478,15 +523,34 @@
       return gene;
     }
 
+    async function compressPhoto(file) {
+      let bitmap;
+      try { bitmap=await createImageBitmap(file); }
+      catch { throw Error('无法读取图片，请换一张 JPEG、PNG、GIF 或 WebP'); }
+      const scale=Math.min(1,MAX_IMAGE_EDGE/Math.max(bitmap.width,bitmap.height));
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+      canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+      const context=canvas.getContext('2d');
+      context.fillStyle='#fff';
+      context.fillRect(0,0,canvas.width,canvas.height);
+      context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+      bitmap.close?.();
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.85));
+      if(!blob) throw Error('图片压缩失败');
+      if(blob.size>MAX_IMAGE_BYTES) throw Error('图片压缩后仍超过 4 MB，请换一张图片');
+      return blob;
+    }
+
     async function photoToGene(file) {
       if(!apiKey) throw Error('请先点击“API Key”配置 Anthropic key');
       if(!['image/jpeg','image/png','image/gif','image/webp'].includes(file.type)) throw Error('仅支持 JPEG、PNG、GIF 或 WebP');
-      if(file.size>7*1024*1024) throw Error('图片不能超过 7 MB');
-      const bytes=new Uint8Array(await file.arrayBuffer());
+      const photo=await compressPhoto(file);
+      const bytes=new Uint8Array(await photo.arrayBuffer());
       let binary='';
       for(let i=0;i<bytes.length;i+=32768) binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
       const raw=await askClaude([
-        {type:'image',source:{type:'base64',media_type:file.type,data:btoa(binary)}},
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:btoa(binary)}},
         {type:'text',text:`识别照片中最主要的鱼，并转成 Fish Lab 基因 JSON，不要解释。${GENE_SCHEMA_TEXT}`}
       ]);
       const gene=normalizeGene({...localParse('照片鱼'),...raw,generatedBy:'ai'});
@@ -599,7 +663,7 @@
     aquarium.onclick=()=>{if(!pairing){selected=null;updateUI()}};
     document.querySelector('#export-codex').onclick=()=>download('fish-lab-codex.json',JSON.stringify({schemaVersion:SCHEMA_VERSION,species:[...CODEX.values()]},null,2),'application/json');
     document.querySelector('#import-codex').onclick=()=>document.querySelector('#codex-file').click();
-    document.querySelector('#codex-file').onchange=async event=>{try{const data=JSON.parse(await event.target.files[0].text());if(!Array.isArray(data.species))throw Error();data.species.map(normalizeGene).filter(Boolean).forEach(g=>CODEX.set(speciesKey(g),g));renderCodex();say('图鉴导入成功')}catch{say('图鉴文件无效')}event.target.value=''};
+    document.querySelector('#codex-file').onchange=async event=>{try{const data=JSON.parse(await event.target.files[0].text());const result=importCodexData(data);say(result.migrated?`已迁移并导入 ${result.count} 个 v1 物种`:`已导入 ${result.count} 个 v2 物种`)}catch(error){say(`导入失败：${error.message}`);showError(error)}event.target.value=''};
 
     window.addEventListener('error',event=>showError(event.error||event.message));
     window.addEventListener('unhandledrejection',event=>showError(event.reason));

@@ -2,7 +2,7 @@
 
 本文只记录已经落地到代码中的功能。尚未实现的计划仍以 README 路线图为准。
 
-## 未发布
+## v0.4.1
 
 - 孵化按钮根据 Key 配置显示“AI 孵化”或“离线孵化”，并标明 Claude/关键词模式。
 - AI 调用失败时不再静默生成本地随机鱼；用户可在错误横幅中主动选择离线降级。
@@ -10,6 +10,8 @@
 - FishGene 增加 `schemaVersion: 2` 与白名单来源字段 `generatedBy`，区分 AI、离线、繁殖和衍生。
 - `generatedBy` 不参与 `speciesKey()`，真实鱼物种名的离线模板匹配保持不变。
 - 默认通过 `https://right.codes/claude` 调用 `claude-haiku-4-5`，同时发送 Bearer Token 与 Anthropic 兼容请求头；Token 不写入源码。
+- 照片不再按原始体积直接拒绝：先用 Canvas 缩到最长边 1024px，再按 JPEG 0.85 压缩，压缩后 4MB 为最终上限。
+- 新增 `migrateGeneV1toV2()`，可迁移 v0.3 导出的 `version: 1` 图鉴；未知 Schema 或无效基因会明确报错。
 
 ## v0.4
 
