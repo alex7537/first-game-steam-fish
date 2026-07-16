@@ -107,24 +107,24 @@
     const MAX_FISH = 12;
     const FISHES = [];
     const CODEX = new Map();
-    const SHAPES = ['流线','圆胖','纤长'];
-    const TAILS = ['扇尾','月牙尾','短尾'];
+    const SHAPES = ['流线','圆胖','纤长','侧扁'];
+    const TAILS = ['扇尾','月牙尾','短尾','丝带尾'];
     const MUTANT_TAILS = ['彗星尾','双叶尾'];
-    const FINS = ['短鳍','长鳍','蝶鳍','刺鳍'];
+    const FINS = ['短鳍','长鳍','蝶鳍','刺鳍','帆状背鳍'];
     const MOUTHS = ['微笑','嘟嘴','尖吻','方嘴'];
     const PATTERNS = ['纯色','斑点','条纹'];
-    const PARTS = ['独角','发光鳍','长须','皇冠','星斑','双尾'];
+    const PARTS = ['独角','发光鳍','长须','皇冠','星斑','双尾','诱饵','发光','獠牙','吻须','尖刺','微光','红腹'];
     const REAL_FISH = [
       {name:'小丑鱼',color:'#f47b35',accent:'#fff4dc',shape:'流线',tail:'扇尾',fin:'短鳍',mouth:'微笑',pattern:'条纹',size:.85,fatness:1.05,speed:1.05},
-      {name:'斗鱼',color:'#3274d9',accent:'#a855f7',shape:'流线',tail:'扇尾',fin:'长鳍',mouth:'嘟嘴',pattern:'纯色',size:.9,fatness:.92,speed:.68},
-      {name:'锦鲤',color:'#fff4e8',accent:'#e94b35',shape:'纤长',tail:'扇尾',fin:'短鳍',mouth:'微笑',pattern:'斑点',size:1.25,fatness:.82,speed:.82},
-      {name:'鮟鱇',color:'#403b4a',accent:'#d7e86c',shape:'圆胖',tail:'短尾',fin:'刺鳍',mouth:'方嘴',pattern:'纯色',size:1.28,fatness:1.28,speed:.55,parts:['发光鳍']},
-      {name:'河豚',color:'#d7c85d',accent:'#69783c',shape:'圆胖',tail:'短尾',fin:'刺鳍',mouth:'嘟嘴',pattern:'斑点',size:1.05,fatness:1.38,speed:.65},
-      {name:'神仙鱼',color:'#dce3e8',accent:'#303940',shape:'圆胖',tail:'月牙尾',fin:'蝶鳍',mouth:'尖吻',pattern:'条纹',size:1.08,fatness:1.05,speed:.75},
+      {name:'斗鱼',color:'#315de8',accent:'#ef4cff',shape:'流线',tail:'丝带尾',fin:'帆状背鳍',mouth:'嘟嘴',pattern:'纯色',size:.9,fatness:.92,speed:.68},
+      {name:'锦鲤',color:'#fff8ee',accent:'#e64032',shape:'纤长',tail:'扇尾',fin:'短鳍',mouth:'微笑',pattern:'斑点',size:1.25,fatness:.82,speed:.82,parts:['吻须']},
+      {name:'鮟鱇',color:'#171923',accent:'#9ee85d',shape:'圆胖',tail:'短尾',fin:'刺鳍',mouth:'方嘴',pattern:'纯色',size:1.28,fatness:1.4,speed:.52,parts:['诱饵','发光','獠牙']},
+      {name:'河豚',color:'#d7c85d',accent:'#69783c',shape:'圆胖',tail:'短尾',fin:'刺鳍',mouth:'嘟嘴',pattern:'斑点',size:1.05,fatness:1.4,speed:.65,parts:['尖刺']},
+      {name:'神仙鱼',color:'#e5eaed',accent:'#252b31',shape:'侧扁',tail:'月牙尾',fin:'蝶鳍',mouth:'尖吻',pattern:'条纹',size:1.08,fatness:1.12,speed:.75},
       {name:'金鱼',color:'#f59f2f',accent:'#ffe083',shape:'圆胖',tail:'双叶尾',fin:'长鳍',mouth:'嘟嘴',pattern:'纯色',size:1,fatness:1.25,speed:.7,parts:['双尾']},
       {name:'鲶鱼',color:'#53636b',accent:'#d7c7a4',shape:'纤长',tail:'短尾',fin:'短鳍',mouth:'方嘴',pattern:'纯色',size:1.2,fatness:.72,speed:.75,parts:['长须']},
-      {name:'狮子鱼',color:'#9f3b32',accent:'#f2dfc4',shape:'流线',tail:'扇尾',fin:'刺鳍',mouth:'尖吻',pattern:'条纹',size:1.15,fatness:1,speed:.65},
-      {name:'霓虹灯鱼',color:'#2fc4e0',accent:'#ee4653',shape:'纤长',tail:'短尾',fin:'短鳍',mouth:'微笑',pattern:'条纹',size:.7,fatness:.75,speed:1.3}
+      {name:'狮子鱼',color:'#9f3b32',accent:'#f2dfc4',shape:'流线',tail:'扇尾',fin:'刺鳍',mouth:'尖吻',pattern:'条纹',size:1.15,fatness:1,speed:.65,parts:['尖刺']},
+      {name:'霓虹灯鱼',color:'#1e9ed6',accent:'#ed3e50',shape:'纤长',tail:'短尾',fin:'短鳍',mouth:'微笑',pattern:'纯色',size:.7,fatness:.75,speed:1.3,parts:['红腹','微光']}
     ];
     const RARITIES = {
       common:{label:'普通',color:'#9aafba',rank:0}, rare:{label:'稀有',color:'#55aaff',rank:1},
@@ -170,6 +170,8 @@
     }
 
     function localParse(text='') {
+      const template=REAL_FISH.find(fish=>text.includes(fish.name));
+      if(template) return realGene(template);
       const palettes=[['#ffc857','#ff7b54'],['#64d8ff','#5267d8'],['#ff6f91','#9d4edd'],['#85e89d','#20a486'],['#c9a7ff','#6f67d8']];
       let [color,accent]=pick(palettes);
       if(has(text,['金','黄'])) [color,accent]=['#ffc857','#ff8c42'];
@@ -252,7 +254,7 @@
       gene.generation=parent.generation+1;
       gene.parents=[parent.id];
       gene.mutations=[];
-      const hueShift=pick([-1,1])*range(25,80);
+      const hueShift=pick([-1,1])*range(30,90);
       const shift=color=>{const hsl=toHsl(color);return `hsl(${(hsl[0]+hueShift+360)%360} ${hsl[1].toFixed(1)}% ${hsl[2].toFixed(1)}%)`};
       gene.color=shift(parent.color);
       gene.accent=shift(parent.accent);
@@ -263,8 +265,7 @@
         ()=>{gene.fin=pick(FINS.filter(x=>x!==gene.fin));return '鳍型'},
         ()=>{gene.mouth=pick(MOUTHS.filter(x=>x!==gene.mouth));return '嘴型'},
         ()=>{gene.pattern=pick(PATTERNS.filter(x=>x!==gene.pattern));return '花纹'},
-        ()=>{gene.eyeCount=clamp(gene.eyeCount+(gene.eyeCount===6?-1:gene.eyeCount===1?1:pick([-1,1])),1,6);return '眼数'},
-        ()=>{gene.fatness=clamp(gene.fatness*range(.78,1.22),.62,1.42);return '胖瘦'}
+        ()=>{gene.eyeCount=clamp(gene.eyeCount+(gene.eyeCount===6?-1:gene.eyeCount===1?1:pick([-1,1])),1,6);return '眼数'}
       ];
       changes.sort(()=>Math.random()-.5).slice(0,pick([1,2])).forEach(change=>gene.mutations.push(change()));
       if(gene.parts.length&&(Math.random()<.5||gene.parts.length===PARTS.length)) gene.parts.splice(Math.floor(Math.random()*gene.parts.length),1);
@@ -276,15 +277,16 @@
     }
 
     function fishSvg(g) {
-      const ry=clamp(30*g.fatness*(g.shape==='圆胖'?1.1:g.shape==='纤长'?.8:1),19,43);
-      const tail=g.tail==='月牙尾'?'M45 50Q14 14 20 7Q52 23 55 50Q52 77 20 93Q14 86 45 50':g.tail==='短尾'?'M50 50L23 28L28 50L23 72Z':MUTANT_TAILS.includes(g.tail)?'M50 50L5 5L29 49L5 95L58 57Z':'M50 50L13 15L23 50L13 85Z';
+      const ry=clamp(30*g.fatness*(g.shape==='圆胖'?1.1:g.shape==='侧扁'?1.2:g.shape==='纤长'?.8:1),19,46);
+      const tail=g.tail==='丝带尾'?'M52 48Q23 0 5 14Q30 42 12 51Q30 60 5 91Q30 98 55 57Z':g.tail==='月牙尾'?'M45 50Q14 14 20 7Q52 23 55 50Q52 77 20 93Q14 86 45 50':g.tail==='短尾'?'M50 50L23 28L28 50L23 72Z':MUTANT_TAILS.includes(g.tail)?'M50 50L5 5L29 49L5 95L58 57Z':'M50 50L13 15L23 50L13 85Z';
       const pattern=g.pattern==='斑点'?`<circle cx="90" cy="35" r="8" fill="${g.accent}"/><circle cx="70" cy="61" r="6" fill="${g.accent}"/>`:g.pattern==='条纹'?`<path d="M70 23Q59 50 70 76M94 20Q83 50 94 79" fill="none" stroke="${g.accent}" stroke-width="9" opacity=".6"/>`:'';
       const eyes=Array.from({length:g.eyeCount},(_,i)=>`<circle cx="${138-Math.floor(i/3)*12}" cy="${35+i%3*10}" r="${5*g.eyeSize}" fill="white"/><circle cx="${140-Math.floor(i/3)*12}" cy="${35+i%3*10}" r="2.3" fill="#071824"/>`).join('');
-      const extras=(g.parts.includes('独角')?'<path d="M120 22L132 0L138 25" fill="#fff0a8"/>':'')+(g.parts.includes('皇冠')?'<path d="M91 22L95 3L106 14L117 2L123 23Z" fill="#ffd24f"/>':'')+(g.parts.includes('长须')?'<path d="M151 56Q176 66 170 88M151 61Q169 78 157 95" fill="none" stroke="white" stroke-width="2"/>':'')+(g.parts.includes('星斑')?'<text x="94" y="64" fill="#fff6a8" font-size="20">★</text>':'');
-      const glow=g.parts.includes('发光鳍')?'filter="url(#glow)"':'';
-      const fin=g.fin==='长鳍'?'M82 27Q100 -4 122 27':g.fin==='蝶鳍'?'M80 28Q94 2 106 26Q118 3 126 29':g.fin==='刺鳍'?'M79 28L88 8L98 27L110 5L123 29':'M88 28Q103 12 116 28';
+      const extras=(g.parts.includes('独角')?'<path d="M120 22L132 0L138 25" fill="#fff0a8"/>':'')+(g.parts.includes('皇冠')?'<path d="M91 22L95 3L106 14L117 2L123 23Z" fill="#ffd24f"/>':'')+(g.parts.includes('长须')?'<path d="M151 56Q176 66 170 88M151 61Q169 78 157 95" fill="none" stroke="white" stroke-width="2"/>':'')+(g.parts.includes('吻须')?'<path d="M151 59Q169 65 173 75M151 62Q167 75 166 83" fill="none" stroke="#e9d7b7" stroke-width="1.8"/>':'')+(g.parts.includes('星斑')?'<text x="94" y="64" fill="#fff6a8" font-size="20">★</text>':'')+(g.parts.includes('诱饵')?`<path d="M116 24Q119 -4 143 9" fill="none" stroke="${g.accent}" stroke-width="3"/><circle cx="145" cy="9" r="7" fill="${g.accent}" filter="url(#glow)"/>`:'')+(g.parts.includes('獠牙')?'<path d="M151 52L158 59L164 51M151 67L158 60L164 68" fill="white" stroke="#d8d8d8" stroke-width="1"/>':'')+(g.parts.includes('尖刺')?'<path d="M67 29L75 7L84 27L94 3L103 27L116 7L124 30" fill="none" stroke="#f3dfbd" stroke-width="4" stroke-linejoin="round"/>':'');
+      const glow=g.parts.includes('发光鳍')||g.parts.includes('发光')?'filter="url(#glow)"':g.parts.includes('微光')?'filter="url(#softGlow)"':'';
+      const fin=g.fin==='帆状背鳍'?'M72 29Q91 -5 128 22Q111 13 119 32':g.fin==='长鳍'?'M82 27Q100 -4 122 27':g.fin==='蝶鳍'?'M80 28Q94 2 106 26Q118 3 126 29':g.fin==='刺鳍'?'M79 28L88 8L98 27L110 5L123 29':'M88 28Q103 12 116 28';
       const mouth=g.mouth==='嘟嘴'?'M150 56Q170 50 153 65':g.mouth==='尖吻'?'M150 54L170 60L151 64':g.mouth==='方嘴'?'M150 54H164V64H151':'M150 58Q158 65 165 57';
-      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 100"><defs><linearGradient id="g${g.id}"><stop stop-color="${g.accent}"/><stop offset="1" stop-color="${g.color}"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="${tail}${g.parts.includes('双尾')?'M48 48L11 27L25 52L12 75L55 56Z':''}" fill="${g.accent}" ${glow}/><ellipse cx="100" cy="50" rx="58" ry="${ry}" fill="url(#g${g.id})" ${glow}/>${pattern}<path d="${fin}" fill="${g.accent}"/>${extras}${eyes}<path d="${mouth}" fill="none" stroke="#572c3a" stroke-width="3"/></svg>`;
+      const belly=g.parts.includes('红腹')?`<path d="M47 54Q100 91 154 54Q143 82 100 83Q58 81 47 54" fill="${g.accent}" opacity=".9"/>`:'';
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 100"><defs><linearGradient id="g${g.id}"><stop stop-color="${g.accent}"/><stop offset="1" stop-color="${g.color}"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="softGlow"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="${tail}${g.parts.includes('双尾')?'M48 48L11 27L25 52L12 75L55 56Z':''}" fill="${g.accent}" ${glow}/><ellipse cx="100" cy="50" rx="58" ry="${ry}" fill="url(#g${g.id})" ${glow}/>${belly}${pattern}<path d="${fin}" fill="${g.accent}"/>${extras}${eyes}<path d="${mouth}" fill="none" stroke="#572c3a" stroke-width="3"/></svg>`;
     }
 
     function addFish(g,position) {
@@ -401,7 +403,7 @@
       setTimeout(()=>toast.classList.remove('show'),6000);
     }
 
-    const GENE_SCHEMA='字段：name；color/accent 为十六进制颜色；shape 取流线/圆胖/纤长；tail 取扇尾/月牙尾/短尾；fin 取短鳍/长鳍/蝶鳍/刺鳍；mouth 取微笑/嘟嘴/尖吻/方嘴；pattern 取纯色/斑点/条纹；eyeCount 1-6；size/fatness/eyeSize/speed 取 0.7-1.4；parts 为独角/发光鳍/长须/皇冠/星斑/双尾的数组。';
+    const GENE_SCHEMA_TEXT=`字段：name；color/accent 为十六进制颜色；shape 取 ${SHAPES.join('/')}；tail 取 ${[...TAILS,...MUTANT_TAILS].join('/')}；fin 取 ${FINS.join('/')}；mouth 取 ${MOUTHS.join('/')}；pattern 取 ${PATTERNS.join('/')}；eyeCount 1-6；size/fatness/eyeSize/speed 取 0.7-1.4；parts 为 ${PARTS.join('/')} 的数组。`;
 
     async function askClaude(content) {
       const response=await fetch('https://api.anthropic.com/v1/messages',{
@@ -419,11 +421,11 @@
 
     async function parseGene(text) {
       if(!apiKey) {
-        say('离线本地解析：仅识别颜色、体型、眼数、条纹和发光等关键词');
+        say('离线本地解析：支持真实物种名、颜色、体型、眼数、条纹和发光等关键词');
         return localParse(text);
       }
       try {
-        const gene=normalizeGene({...localParse(text),...await askClaude(`把鱼类描述转成 JSON，不要解释：${text}\n${GENE_SCHEMA}`)});
+        const gene=normalizeGene({...localParse(text),...await askClaude(`把鱼类描述转成 JSON，不要解释：${text}\n${GENE_SCHEMA_TEXT}`)});
         if(!gene) throw Error('API 基因格式无效');
         document.querySelector('#mode-badge').textContent='Claude AI 解析';
         document.querySelector('#mode-badge').classList.add('ai');
@@ -447,7 +449,7 @@
       for(let i=0;i<bytes.length;i+=32768) binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
       const raw=await askClaude([
         {type:'image',source:{type:'base64',media_type:file.type,data:btoa(binary)}},
-        {type:'text',text:`识别照片中最主要的鱼，并转成 Fish Lab 基因 JSON，不要解释。${GENE_SCHEMA}`}
+        {type:'text',text:`识别照片中最主要的鱼，并转成 Fish Lab 基因 JSON，不要解释。${GENE_SCHEMA_TEXT}`}
       ]);
       const gene=normalizeGene({...localParse('照片鱼'),...raw});
       if(!gene) throw Error('照片识别结果不是有效基因');
