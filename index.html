@@ -110,6 +110,8 @@
     const MAX_FISH = 12;
     const SCHEMA_VERSION = 2;
     const GENERATED_BY = ['ai','local','bred','evolved'];
+    const ANTHROPIC_BASE_URL = 'https://right.codes/claude';
+    const ANTHROPIC_MODEL = 'claude-haiku-4-5';
     const FISHES = [];
     const CODEX = new Map();
     const SHAPES = ['流线','圆胖','纤长','侧扁'];
@@ -429,8 +431,8 @@
 
     function updateHatchMode() {
       hatchButton.textContent=apiKey?'AI 孵化':'离线孵化';
-      hatchMode.textContent=apiKey?'Claude Haiku 4.5':'关键词模式';
-      modeBadge.textContent=apiKey?'Claude AI 已配置':'离线本地解析';
+      hatchMode.textContent=apiKey?'Claude Haiku 4.5 · right.codes':'关键词模式';
+      modeBadge.textContent=apiKey?'Claude AI 网关已配置':'离线本地解析';
       modeBadge.classList.toggle('ai',Boolean(apiKey));
     }
 
@@ -446,13 +448,13 @@
     async function askClaude(content) {
       let response;
       try {
-        response=await fetch('https://api.anthropic.com/v1/messages',{
+        response=await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`,{
           method:'POST',
-          headers:{'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:350,messages:[{role:'user',content}]})
+          headers:{'content-type':'application/json','authorization':`Bearer ${apiKey}`,'x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body:JSON.stringify({model:ANTHROPIC_MODEL,max_tokens:350,messages:[{role:'user',content}]})
         });
       } catch {
-        throw Error('AI 孵化失败：网络无法连接 Anthropic API，请检查网络、代理或浏览器拦截设置');
+        throw Error('AI 孵化失败：网络无法连接 Claude 网关，请检查网络、代理或浏览器拦截设置');
       }
       if(!response.ok) {
         const body=await response.json().catch(()=>null);
@@ -572,7 +574,7 @@
     };
     document.querySelector('#random-button').onclick=()=>{const g=localParse('随机变异');if(addFish(g))say(`${g.name} 已加入鱼缸`)};
     document.querySelector('#api-button').onclick=()=>{
-      const key=prompt('输入 Anthropic API Key。仅保存在页面内存，但浏览器直连仍可能暴露给页面脚本或扩展；正式发布请使用后端代理。',apiKey);
+      const key=prompt('输入 Anthropic Auth Token。仅保存在页面内存，但浏览器直连仍可能暴露给页面脚本或扩展；正式发布请使用后端代理。',apiKey);
       if(key===null) return;
       apiKey=key.trim();
       updateHatchMode();

@@ -9,6 +9,7 @@
 - 401、429 和网络连接失败分别给出明确错误与处理方向，成功提示以真实调用结果为准。
 - FishGene 增加 `schemaVersion: 2` 与白名单来源字段 `generatedBy`，区分 AI、离线、繁殖和衍生。
 - `generatedBy` 不参与 `speciesKey()`，真实鱼物种名的离线模板匹配保持不变。
+- 默认通过 `https://right.codes/claude` 调用 `claude-haiku-4-5`，同时发送 Bearer Token 与 Anthropic 兼容请求头；Token 不写入源码。
 
 ## v0.4
 
